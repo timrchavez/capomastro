@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.contrib.auth.models import User
 
 from jenkins.models import Job, Build, Artifact
 
@@ -16,7 +17,7 @@ class DependencyType(models.Model):
 
 class Dependency(models.Model):
 
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     dependency_type = models.ForeignKey(DependencyType)
     job = models.ForeignKey(Job, null=True)
 
@@ -69,6 +70,18 @@ class Project(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ProjectBuild(models.Model):
+
+    project = models.ForeignKey(Project)
+    requested_by = models.ForeignKey(User)
+    requested_at = models.DateTimeField(auto_now_add=True)
+    ended_at = models.DateTimeField(null=True)
+    status = models.CharField(max_length=10, default="INCOMPLETE")
+
+    def __str__(self):
+        return self.project.name
 
 
 @receiver(post_save, sender=Build, dispatch_uid="new_build_handler")

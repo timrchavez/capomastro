@@ -1,3 +1,5 @@
+import getpass
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'l1cx=%-owxv1hs8+55cxg^1p@fq_z72=$zzc5%doar+%#_3gg3'
 
@@ -11,7 +13,7 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
         "NAME": "wooster",
-        "USER": "kevin",
+        "USER": getpass.getuser(),
         "PASSWORD": "",
         "HOST": "",
         "PORT": "",

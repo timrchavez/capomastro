@@ -106,8 +106,7 @@ class NotificationHandlerTest(TestCase):
         response = self._get_response_with_data(finished)
         build = Build.objects.get(job=self.job, number=11)
         self.assertEqual("SUCCESS", build.result)
-        # TODO: This should be normalised to the Server URL.
-        # Implement a JenkinsServer.normalise_url method.
+        # This gets properly populated by the task that runs.
         self.assertEqual("job/mytestjob/11/", build.url)
         self.assertEqual("FINISHED", build.phase)
 
@@ -154,22 +153,7 @@ class JenkinsServerDetailTest(WebTest):
         response = self.app.get(server_url, user="testing")
         self.assertEqual(200, response.status_code)
         self.assertEqual(server, response.context["server"])
-        self.assertEqual(jobs, list(response.context["jobs"]))
-
-
-#class JobIndexTest(WebTest):
-#
-#    def setUp(self):
-#        self.user = User.objects.create_user("testing")
-#
-#    def test_server_index(self):
-#        """
-#        The index view should list all servers.
-#        """
-#        servers = JenkinsServerFactory.create_batch(5)
-#        response = self.app.get(reverse("jenkinsserver_index"), user="testing")
-#        self.assertEqual(200, response.status_code)
-#        self.assertEqual(servers, list(response.context["object_list"]))
+        self.assertEqual(set(jobs), set(response.context["jobs"]))
 
 
 class ServerJobBuildIndexTest(WebTest):

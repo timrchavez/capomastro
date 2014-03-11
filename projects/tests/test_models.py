@@ -1,7 +1,8 @@
 from django.test import TestCase
+from django.contrib.auth.models import User
 
 from projects.models import (
-    Project, DependencyType, Dependency, ProjectDependency)
+    Project, DependencyType, Dependency, ProjectDependency, ProjectBuild)
 from .factories import ProjectFactory, DependencyFactory
 from jenkins.tests.factories import JobFactory, BuildFactory, ArtifactFactory
 
@@ -116,3 +117,21 @@ class ProjectTest(TestCase):
         artifact2 = ArtifactFactory.create(build=build2)
 
         self.assertEqual([artifact2], list(project.get_current_artifacts()))
+
+
+class ProjectBuildTest(TestCase):
+
+    def setUp(self):
+        self.project = ProjectFactory.create()
+        self.user = User.objects.create_user("testing")
+
+    def test_instantiation(self):
+        """
+        We can create ProjectBuilds.
+        """
+        project_build = ProjectBuild.objects.create(
+            project=self.project, requested_by=self.user)
+        self.assertEqual(self.user, project_build.requested_by)
+        self.assertIsNotNone(project_build.requested_at)
+        self.assertIsNone(project_build.ended_at)
+        self.assertEqual("INCOMPLETE", project_build.status)
