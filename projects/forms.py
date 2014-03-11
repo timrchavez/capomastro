@@ -21,6 +21,6 @@ class ProjectForm(ModelForm):
         for dependency in dependencies:
             project_dependency = ProjectDependency.objects.create(
                 project=project, dependency=dependency,
-                auto_track=self.data["auto_track"],
+                auto_track=self.data.get("auto_track", False),
                 current_build=dependency.get_current_build())
         return project

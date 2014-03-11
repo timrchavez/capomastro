@@ -1,7 +1,11 @@
+from celery.utils.log import get_task_logger
+from celery import shared_task
 
-def import_build_data(build_id):
-    """
-    """
-    # TODO
-    # This should import the artifacts etc from a build when we get a FINISHED
-    # notification.
+from jenkins.helpers import import_build_for_job
+
+logger = get_task_logger(__name__)
+
+
+@shared_task
+def import_build_task(job_id, build_number):
+    import_build_for_job(job_id, build_number)
