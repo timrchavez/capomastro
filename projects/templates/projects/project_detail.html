@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+
+{% block page_title %}{{ object.name }}{% endblock %}
+{% block page_class %}project{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div>
+      <h2>{{ object.name }}</h2>
+    </div>
+  </div>
+</div>
+{% endblock %}

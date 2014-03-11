@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+
+{% block page_title %}Wooster - Jenkins Servers{% endblock %}
+{% block page_class %}jenkinsservers{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <h2>Jenkins Servers</h2>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>URL</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for server in object_list %}
+        <tr>
+          <td><a href="{% url 'jenkinsserver_detail' server.pk %}">{{ server.name }}</a></td>
+          <td><a href="{{ server.url }}">{{ server.url }}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+     {% if request.user.is_superuser %}
+      <p><a href="{% url 'admin:jenkins_jenkinsserver_add' %}" class="btn btn-primary btn-lg" role="button">Create »</a></p>
+     {% endif %}
+  </div>
+</div>
+{% endblock %}

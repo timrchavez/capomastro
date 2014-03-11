@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+
+{% block page_title %}Wooster - Projects{% endblock %}
+{% block page_class %}projects{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <h2>Projects</h2>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for project in object_list %}
+        <tr>
+          <td><a href="{% url 'projects_detail' project.pk %}">{{ project.name }}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p><a href="{% url 'projects_create' %}" class="btn btn-primary btn-lg" role="button">Create »</a></p>
+  </div>
+</div>
+{% endblock %}
