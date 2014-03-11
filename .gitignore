@@ -37,3 +37,6 @@ nosetests.xml
 
 # Databases
 db.sqlite3
+
+# Local settings
+wooster/local_settings.py
