@@ -24,7 +24,7 @@
         {% for job in jobs %}
         <tr>
           <td><a href="">{{ job.name }}</a></td>
-          <td><a href="">{{ job.builds|length }}</a></td>
+          <td><a href="">{{ job.build_set.count }}</a></td>
         </tr>
         {% endfor %}
       </tbody>
