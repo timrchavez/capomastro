@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+
+{% block page_title %}{{ server.name }} | {{ job.name }}{% endblock %}
+{% block page_class %}jenkinsserver{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div>
+      <h2>Builds for {{ job.name }}</h2>
+    </div>
+  </div>
+  <div class="row">
+    <h3>Builds</h3>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Build Id</th>
+          <th>Duration</th>
+          <th>URL</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for build in builds %}
+        <tr>
+          <td>{{ build.number }}</a></td>
+          <td>{{ build.build_id }}</a></td>
+          <td>{{ build.url }}</a></td>
+          <td>{{ build.result }}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

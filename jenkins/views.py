@@ -2,7 +2,8 @@ import json
 import logging
 
 from django.http import HttpResponse
-from django.views.generic import View, ListView, DetailView
+from django.shortcuts import get_object_or_404
+from django.views.generic import View, ListView, DetailView, TemplateView
 from braces.views import (
     LoginRequiredMixin, PermissionRequiredMixin, CsrfExemptMixin)
 
@@ -68,4 +69,22 @@ class JenkinsServerDetailView(LoginRequiredMixin, DetailView):
         context["jobs"] = context["server"].job_set.all()
         return context
 
-__all__ = ["NotificationHandlerView", "JenkinsServerListView", "JenkinsServerDetailView"]
+
+class JenkinsServerJobBuildsIndexView(LoginRequiredMixin, TemplateView):
+
+    template_name = "jenkins/jenkinsserver_job_builds_index.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(
+            JenkinsServerJobBuildsIndexView, self).get_context_data(**kwargs)
+        server = get_object_or_404(JenkinsServer, pk=kwargs["server_pk"])
+        job = get_object_or_404(server.job_set, pk=kwargs["job_pk"])
+        context["builds"] = job.build_set.all()
+        context["job"] = job
+        context["server"] = server
+        return context
+
+
+__all__ = [
+    "NotificationHandlerView", "JenkinsServerListView",
+    "JenkinsServerDetailView", "JenkinsServerJobBuildsIndexView"]

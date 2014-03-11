@@ -1,5 +1,7 @@
 from django.db import models
 
+from jenkinsapi.jenkins import Jenkins
+
 
 class JenkinsServer(models.Model):
 
@@ -11,6 +13,13 @@ class JenkinsServer(models.Model):
 
     def __str__(self):
         return "%s (%s)" % (self.name, self.url)
+
+    def get_client(self):
+        """
+        Returns a configured jenkinsapi Jenkins client.
+        """
+        return Jenkins(
+            self.url, username=self.username, password=self.password)
 
 
 class Job(models.Model):

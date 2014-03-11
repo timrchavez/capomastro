@@ -10,7 +10,7 @@ from mock import patch
 
 from jenkins.views import NotificationHandlerView
 from jenkins.models import Build
-from .factories import JobFactory, JenkinsServerFactory
+from .factories import JobFactory, JenkinsServerFactory, BuildFactory
 
 
 class NotificationHandlerTest(TestCase):
@@ -187,13 +187,13 @@ class ServerJobBuildIndexTest(WebTest):
         The detail view should render the server, job and builds.
         """
         server = JenkinsServerFactory.create()
-        job = JobFactory.create(server=server))
+        job = JobFactory.create(server=server)
         builds = BuildFactory.create_batch(5, job=job)
         server_url = reverse(
             "jenkinsserver_job_builds_index",
-            kwargs={"server": server.pk, "job": job.pk})
+            kwargs={"server_pk": server.pk, "job_pk": job.pk})
         response = self.app.get(server_url, user="testing")
         self.assertEqual(200, response.status_code)
         self.assertEqual(server, response.context["server"])
         self.assertEqual(job, response.context["job"])
-        self.assertEqual(builds, list(response.context["builds"]))
+        self.assertEqual(set(builds), set(response.context["builds"]))
