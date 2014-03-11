@@ -26,7 +26,6 @@ class JenkinsServerTest(TestCase):
 
 class BuildTest(TestCase):
 
-
     def test_ordering(self):
         """Builds should be ordered in reverse build order by default."""
         builds = BuildFactory.create_batch(5)

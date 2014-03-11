@@ -109,6 +109,7 @@ class NotificationHandlerTest(TestCase):
         # TODO: This should be normalised to the Server URL.
         # Implement a JenkinsServer.normalise_url method.
         self.assertEqual("job/mytestjob/11/", build.url)
+        self.assertEqual("FINISHED", build.phase)
 
 
 class JenkinsServerIndexTest(WebTest):

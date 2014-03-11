@@ -3,7 +3,7 @@ from braces.views import (
     LoginRequiredMixin, PermissionRequiredMixin, FormValidMessageMixin,
     SuccessURLRedirectListMixin)
 
-from projects.models import Project, Dependency
+from projects.models import Project, Dependency, ProjectDependency
 from projects.forms import ProjectForm
 
 
@@ -26,6 +26,17 @@ class ProjectListView(LoginRequiredMixin, ListView):
 class ProjectDetailView(LoginRequiredMixin, DetailView):
 
     model = Project
+    context_object_name = "project"
+
+    def get_context_data(self, **kwargs):
+        """
+        Supplement the project with its dependencies.
+        """
+        context = super(
+            ProjectDetailView, self).get_context_data(**kwargs)
+        context["dependencies"] = ProjectDependency.objects.filter(
+            project=context["project"])
+        return context
 
 
 class DependencyCreateView(

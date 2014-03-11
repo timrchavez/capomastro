@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from jenkins.models import Job, Build
+from jenkins.models import Job, Build, Artifact
 
 
 class DependencyType(models.Model):
@@ -17,14 +17,22 @@ class DependencyType(models.Model):
 class Dependency(models.Model):
 
     name = models.CharField(max_length=255)
-    dependency_type = models.OneToOneField(DependencyType)
-    job = models.ForeignKey(Job, editable=False, null=True)
+    dependency_type = models.ForeignKey(DependencyType)
+    job = models.ForeignKey(Job, null=True)
 
     class Meta:
         verbose_name_plural = "dependencies"
 
     def __str__(self):
         return self.name
+
+    def get_current_build(self):
+        """
+        Return the most recent build
+        """
+        if self.job is not None:
+            finished_builds = self.job.build_set.filter(phase="FINISHED")
+            return finished_builds.order_by("-number")[0]
 
 
 class ProjectDependency(models.Model):
@@ -50,6 +58,17 @@ class Project(models.Model):
 
     name = models.CharField(max_length=255)
     dependencies = models.ManyToManyField(Dependency, through=ProjectDependency)
+
+    def get_current_artifacts(self):
+        """
+        """
+        current_builds = []
+        for dependency in ProjectDependency.objects.filter(project=self):
+            current_builds.append(dependency.current_build)
+        return Artifact.objects.filter(build__in=current_builds)
+
+    def __str__(self):
+        return self.name
 
 
 @receiver(post_save, sender=Build, dispatch_uid="new_build_handler")

@@ -3,7 +3,7 @@ from django.test import TestCase
 from projects.models import (
     Project, DependencyType, Dependency, ProjectDependency)
 from .factories import ProjectFactory, DependencyFactory
-from jenkins.tests.factories import JobFactory, BuildFactory
+from jenkins.tests.factories import JobFactory, BuildFactory, ArtifactFactory
 
 
 class DependencyTypeTest(TestCase):
@@ -22,6 +22,25 @@ class DependencyTest(TestCase):
             name="my-test", config_xml="testing xml")
         dependency = Dependency.objects.create(
             name="My Dependency", dependency_type=dependency_type)
+
+    def test_get_current_build(self):
+        """
+        Dependency.get_current_build should return the most recent build that
+        has completed and was SUCCESSful.
+        """
+        build1 = BuildFactory.create()
+        build2 = BuildFactory.create(
+            phase="FINISHED", result="SUCCESS", job=build1.job)
+        dependency = DependencyFactory.create(job=build1.job)
+        self.assertEqual(build2, dependency.get_current_build())
+
+    def test_get_current_build_with_no_builds(self):
+        """
+        If there are no current builds for a given dependency, then we should
+        get None.
+        """
+        dependency = DependencyFactory.create()
+        self.assertEqual(None, dependency.get_current_build())
 
 
 class ProjectDependencyTest(TestCase):
@@ -78,3 +97,22 @@ class ProjectDependencyTest(TestCase):
         self.assertEqual(build1, project_dependency.current_build)
 
 
+class ProjectTest(TestCase):
+
+    def test_get_current_artifacts(self):
+        """
+        Project.get_current_artifacts returns the current set of artifacts
+        for this project.
+        """
+        project = ProjectFactory.create()
+        job = JobFactory.create()
+        dependency = DependencyFactory.create(job=job)
+        ProjectDependency.objects.create(
+            project=project, dependency=dependency)
+        build1 = BuildFactory.create(job=job)
+        build2 = BuildFactory.create(job=job)
+
+        artifact1 = ArtifactFactory.create(build=build1)
+        artifact2 = ArtifactFactory.create(build=build2)
+
+        self.assertEqual([artifact2], list(project.get_current_artifacts()))

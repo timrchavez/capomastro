@@ -29,9 +29,8 @@ def import_builds_for_job(job_id):
             "job": job,
             "result": build_result.get_status(),
             "build_id": build_result._data["id"],
-            "buildno": build_result.buildno,
+            "number": build_result.buildno,
             "duration": build_result._data["duration"],
-            "estimated_duration": build_result._data["estimatedDuration"],
             "url": build_result.get_result_url()
         }
         logging.info("%s" % build_details)

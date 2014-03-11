@@ -11,5 +11,48 @@
       <h2>{{ object.name }}</h2>
     </div>
   </div>
+  <div class="row">
+    <h3>Dependencies</h3>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Auto-track</th>
+          <th>Current Build #</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for projdep in dependencies %}
+        <tr>
+          <td>{{ projdep.dependency.name }}</td>
+          <td>{{ projdep.auto_track|yesno }}</td>
+          <td>{{ projdep.current_build.number }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="row">
+    <h3>Current artifacts</h3>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Build</th>
+          <th>Filename</th>
+          <th>URL</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for artifact in project.get_current_artifacts %}
+        <tr>
+          <td>{{ artifact.build }}</td>
+          <td>{{ artifact.filename }}</td>
+          <td><a href="{{ artifact.url }}">{{ artifact.url }}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
 </div>
 {% endblock %}

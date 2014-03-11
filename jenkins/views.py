@@ -44,8 +44,8 @@ class NotificationHandlerView(CsrfExemptMixin, View):
                 job.build_set.create(
                     number=notification["build"]["number"],
                     result=notification["build"]["status"],
-                    url=notification["build"]["url"]
-                    )
+                    url=notification["build"]["url"],
+                    phase=notification["build"]["phase"])
             # TODO: Task to process this new build - importing artifacts etc.
         return HttpResponse(status=200)
 
