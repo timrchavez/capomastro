@@ -2,17 +2,30 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
+from django.template import Template, Context
 
 from jenkins.models import Job, Build, Artifact
 
 
 class DependencyType(models.Model):
+    """
+    Used as a model for creating new Jenkins jobs.
+    """
 
     name = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
     config_xml = models.TextField()
 
     def __str__(self):
         return self.name
+
+    def generate_config_for_dependency(self, dependency):
+        """
+        Parse the config XML as a Django template, replacing {{}} holders etc
+        as appropriate.
+        """
+        context = Context({"dependency": dependency})
+        return Template(self.config_xml).render(context)
 
 
 class Dependency(models.Model):
@@ -20,6 +33,7 @@ class Dependency(models.Model):
     name = models.CharField(max_length=255, unique=True)
     dependency_type = models.ForeignKey(DependencyType)
     job = models.ForeignKey(Job, null=True)
+    description = models.TextField(null=True, blank=True)
 
     class Meta:
         verbose_name_plural = "dependencies"
@@ -33,7 +47,8 @@ class Dependency(models.Model):
         """
         if self.job is not None:
             finished_builds = self.job.build_set.filter(phase="FINISHED")
-            return finished_builds.order_by("-number")[0]
+            if finished_builds.count() > 0:
+                return finished_builds.order_by("-number")[0]
 
 
 class ProjectDependency(models.Model):
@@ -58,6 +73,7 @@ class ProjectDependency(models.Model):
 class Project(models.Model):
 
     name = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
     dependencies = models.ManyToManyField(Dependency, through=ProjectDependency)
 
     def get_current_artifacts(self):
@@ -73,6 +89,7 @@ class Project(models.Model):
 
 
 class ProjectBuild(models.Model):
+    """Represents a requested build of a Project."""
 
     project = models.ForeignKey(Project)
     requested_by = models.ForeignKey(User)
@@ -82,6 +99,15 @@ class ProjectBuild(models.Model):
 
     def __str__(self):
         return self.project.name
+
+    def create_dependencies(self):
+        """
+        """
+
+
+class ProjectBuildDependency(models.Model):
+    """
+    """
 
 
 @receiver(post_save, sender=Build, dispatch_uid="new_build_handler")
