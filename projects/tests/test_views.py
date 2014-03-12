@@ -5,10 +5,15 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 
 from django_webtest import WebTest
-from mock import patch
+import mock
 
-from projects.models import ProjectDependency, Project
+from projects.models import ProjectDependency, Project, ProjectBuild
 from .factories import ProjectFactory, DependencyFactory
+
+# TODO Introduce subclass of WebTest that allows easy assertions that a page
+# requires various permissions...
+# Possibly, through looking to see if Views are mixed in with the various
+# Django-Braces mixins.
 
 
 class ProjectDetailTest(WebTest):
@@ -77,3 +82,37 @@ class ProjectCreateTest(WebTest):
         """
         The project name should be unique.
         """
+
+
+class ProjectBuildViewTest(WebTest):
+
+    def setUp(self):
+        self.user = User.objects.create_user("testing")
+
+    def test_page_requires_authenticated_user(self):
+        """
+        """
+        # TODO: We should assert that requests without a logged in user
+        # get redirected to login.
+
+    def test_build_project_view(self):
+        """
+        The detail view should render the server and jobs for the server.
+        """
+        project = ProjectFactory.create()
+        dependency = ProjectDependency.objects.create(
+            project=project, dependency=DependencyFactory.create())
+        project_url = reverse("projects_detail", kwargs={"pk": project.pk})
+
+        project_build = mock.MagicMock(autospec=ProjectBuild)
+        project_build.build_id = "20140312.1"
+        with mock.patch("projects.views.build_project") as mock_build_project:
+            mock_build_project.return_value = project_build
+            response = self.app.get(project_url, user="testing")
+            response = response.forms["build-project"].submit().follow()
+
+        mock_build_project.assert_called_once_with(project)
+        self.assertEqual(200, response.status_code)
+        import pdb; pdb.set_trace()
+        self.assertContains(
+            response, "Build '20140312.1' Queued.")

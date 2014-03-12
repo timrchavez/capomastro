@@ -6,7 +6,7 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 
 from django_webtest import WebTest
-from mock import patch
+import mock
 
 from jenkins.views import NotificationHandlerView
 from jenkins.models import Build
@@ -34,7 +34,7 @@ class NotificationHandlerTest(TestCase):
         request we should get a 412 response and log this.
         """
         notification = {}
-        with patch("jenkins.views.logging") as mock_logging:
+        with mock.patch("jenkins.views.logging") as mock_logging:
             response = self._get_response_with_data(
                 notification, remote_addr="127.0.0.1")
             self.assertEqual(412, response.status_code)
@@ -53,7 +53,7 @@ class NotificationHandlerTest(TestCase):
             "name": "unknown job",
             "build": {"phase": "FINISHED", "number": 10}
         }
-        with patch("jenkins.views.logging") as mock_logging:
+        with mock.patch("jenkins.views.logging") as mock_logging:
             response = self._get_response_with_data(
                 notification)
             self.assertEqual(412, response.status_code)

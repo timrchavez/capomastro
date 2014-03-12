@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% load bootstrap3 %}
 
-{% block page_title %}{{ object.name }}{% endblock %}
+{% block page_title %}{{ project.name }}{% endblock %}
 {% block page_class %}project{% endblock %}
 
 {% block content %}
 <div class="container">
   <div class="row">
     <div>
-      <h2>{{ object.name }}</h2>
+      <h2>{{ project.name }}</h2>
     </div>
   </div>
   <div class="row">
@@ -31,6 +31,14 @@
         {% endfor %}
       </tbody>
     </table>
+    <p>
+      <form action="{% url 'projects_build_project' pk=project.pk %}" method="post" class="form" id="build-project">
+        {% csrf_token %}
+        {% buttons %}
+          <button type="submit" class="btn btn-primary">Build project»</button>
+        {% endbuttons %}
+      </form>
+    </p>
   </div>
   <div class="row">
     <h3>Current artifacts</h3>

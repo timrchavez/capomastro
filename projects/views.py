@@ -1,10 +1,15 @@
-from django.views.generic import CreateView, ListView, DetailView
+from django.views.generic import CreateView, ListView, DetailView, View
+from django.contrib import messages
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
+
 from braces.views import (
     LoginRequiredMixin, PermissionRequiredMixin, FormValidMessageMixin,
     SuccessURLRedirectListMixin)
 
 from projects.models import Project, Dependency, ProjectDependency
 from projects.forms import ProjectForm
+from projects.helpers import build_project
 
 
 class ProjectCreateView(
@@ -21,6 +26,16 @@ class ProjectCreateView(
 class ProjectListView(LoginRequiredMixin, ListView):
 
     model = Project
+
+
+class ProjectBuildView(LoginRequiredMixin, View):
+
+    def post(self, request, pk):
+        project = Project.objects.get(pk=pk)
+        project_build = build_project(project)
+        messages.add_message(
+            request, messages.INFO, "Build '%s' Queued." % project_build.build_id)
+        return HttpResponseRedirect(reverse("projects_index"))
 
 
 class ProjectDetailView(LoginRequiredMixin, DetailView):
@@ -49,4 +64,4 @@ class DependencyCreateView(
 
 __all__ = [
     "ProjectCreateView", "ProjectListView", "ProjectDetailView", 
-    "DependencyCreateView"]
+    "DependencyCreateView", "ProjectBuildView"]
