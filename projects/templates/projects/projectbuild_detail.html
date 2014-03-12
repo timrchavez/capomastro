@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+
+{% block page_title %}{{ project.name }}{% endblock %}
+{% block page_class %}project{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div>
+      <h2>{{ project_build.build_id }}</h2>
+    </div>
+  </div>
+  <div class="row">
+    <h3>Builds</h3>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Build #</th>
+          <th>Status</th>
+          <th>URL</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for build in builds %}
+        <tr>
+          <td>{{ build.number }}</td>
+          <td>{{ build.status }}</td>
+          <td>{{ build.phase }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="row">
+    <h3>Current artifacts</h3>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Build</th>
+          <th>Filename</th>
+          <th>URL</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for artifact in project_build.get_current_artifacts %}
+        <tr>
+          <td>{{ artifact.build }}</td>
+          <td>{{ artifact.filename }}</td>
+          <td><a href="{{ artifact.url }}">{{ artifact.url }}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}
