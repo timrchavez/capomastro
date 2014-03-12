@@ -37,4 +37,6 @@ def build_project(project, user=None):
     build = ProjectBuild.objects.create(
         project=project, requested_by=user)
 
+    for dependency in project.dependencies.all():
+        build_job.delay(dependency.job.pk, build.build_id)
     return build

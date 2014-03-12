@@ -41,5 +41,5 @@ class BuildJobTaskTest(TestCase):
 
         mock_jenkins.assert_called_with(
             self.server.url, username=u"root", password=u"testing")
-        mock_jenkins.return_value.build_job.assert_called_with(
+        mock_jenkins.return_value.build_job.delay.assert_called_with(
             job.name, params={"BUILD_ID": "20140312.1"})

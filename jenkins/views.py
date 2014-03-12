@@ -1,6 +1,8 @@
 import json
 import logging
 
+import pprint
+
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.views.generic import View, ListView, DetailView, TemplateView
@@ -34,7 +36,12 @@ class NotificationHandlerView(CsrfExemptMixin, View):
         if not server:
             return HttpResponse(status=412)
         notification = json.loads(request.body)
-        if notification["build"].get("phase") == "FINISHED":
+
+        pprint.pprint(notification)
+
+        if notification["build"]["phase"] == "STARTED":
+            pprint.pprint(notification)
+        elif notification["build"]["phase"] == "FINISHED":
             try:
                 job = server.job_set.get(name=notification["name"])
             except Job.DoesNotExist:
@@ -47,7 +54,8 @@ class NotificationHandlerView(CsrfExemptMixin, View):
                     result=notification["build"]["status"],
                     url=notification["build"]["url"],
                     phase=notification["build"]["phase"])
-                import_build_task.delay(job.pk, notification["build"]["number"])
+                # TODO: Mock this out in tests...
+                # import_build_task.delay(job.pk, notification["build"]["number"])
         return HttpResponse(status=200)
 
 
