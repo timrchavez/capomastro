@@ -28,7 +28,6 @@ INSTALLED_APPS = (
 
     'south',
     'bootstrap3',
-    'django_extensions',
 
     'jenkins',
     'projects',

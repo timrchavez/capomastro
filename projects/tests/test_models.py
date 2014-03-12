@@ -63,7 +63,7 @@ class DependencyTest(TestCase):
         """
         build1 = BuildFactory.create()
         build2 = BuildFactory.create(
-            phase="FINISHED", result="SUCCESS", job=build1.job)
+            phase="FINISHED", status="SUCCESS", job=build1.job)
         dependency = DependencyFactory.create(job=build1.job)
         self.assertEqual(build2, dependency.get_current_build())
 
