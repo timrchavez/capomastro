@@ -135,3 +135,13 @@ class ProjectBuildTest(TestCase):
         self.assertIsNotNone(project_build.requested_at)
         self.assertIsNone(project_build.ended_at)
         self.assertEqual("INCOMPLETE", project_build.status)
+
+    def test_create_requirements(self):
+        """
+        ProjectBuild.create_dependencies has build dependencies with versions
+        for each of the dependencies at the time of the call.
+        """
+        project_build = ProjectBuild.objects.create(
+            project=self.project, requested_by=self.user)
+        project_build.create_requirements()
+

@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from django_webtest import WebTest
 from mock import patch
 
-from projects.models import ProjectDependency
+from projects.models import ProjectDependency, Project
 from .factories import ProjectFactory, DependencyFactory
 
 
@@ -36,3 +36,44 @@ class ProjectDetailTest(WebTest):
         self.assertEqual(200, response.status_code)
         self.assertEqual(project, response.context["project"])
         self.assertEqual([dependency], list(response.context["dependencies"]))
+
+
+class ProjectCreateTest(WebTest):
+
+    def setUp(self):
+        self.user = User.objects.create_superuser(
+            "testing", "testing@example.com", "password")
+        self.dependency1 = DependencyFactory.create()
+        self.dependency2 = DependencyFactory.create()
+
+    def test_page_requires_permission(self):
+        """
+        """
+        # TODO: We should assert that requests without the
+        # "projects.add_project" get redirected to login.
+
+    def test_create_project_with_dependencies(self):
+        """
+        We can create projects with a set of dependencies.
+        """
+        project_url = reverse("projects_create")
+        response = self.app.get(project_url, user="testing")
+        form = response.forms["create-project"]
+        form["dependencies"].select_multiple(
+            [self.dependency1.pk, self.dependency2.pk])
+        form["name"].value = "My Project"
+
+        response = form.submit()
+
+        project = Project.objects.get(name="My Project")
+        # TODO: Check that the dependencies are not auto-tracked.
+
+    def test_create_project_with_auto_track(self):
+        """
+        We can set the auto_track on dependencies of the project.
+        """
+
+    def test_create_project_non_unique_name(self):
+        """
+        The project name should be unique.
+        """

@@ -15,10 +15,7 @@ class ProjectForm(ModelForm):
     def save(self, commit=True):
         project = super(ProjectForm, self).save(commit=False)
         project.save()
-        dependencies = get_list_or_404(
-            Dependency, pk__in=self.data["dependencies"])
-
-        for dependency in dependencies:
+        for dependency in self.cleaned_data["dependencies"]:
             project_dependency = ProjectDependency.objects.create(
                 project=project, dependency=dependency,
                 auto_track=self.data.get("auto_track", False),
