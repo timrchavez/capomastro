@@ -8,7 +8,7 @@ from braces.views import (
     LoginRequiredMixin, PermissionRequiredMixin, CsrfExemptMixin)
 
 from jenkins.models import JenkinsServer, Build, Job
-from jenkins.tasks import import_build_task
+from jenkins.tasks import import_build
 
 
 class NotificationHandlerView(CsrfExemptMixin, View):
@@ -65,8 +65,8 @@ class NotificationHandlerView(CsrfExemptMixin, View):
                 existing_build.phase = build_phase
                 existing_build.url = build_url
                 existing_build.save()
-                # TODO: Mock this out in tests...
-                # import_build_task.delay(job.pk, notification["build"]["number"])
+
+            import_build.delay(job.pk, build_number)
         return HttpResponse(status=200)
 
 

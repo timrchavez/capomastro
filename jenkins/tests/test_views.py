@@ -129,12 +129,17 @@ class NotificationHandlerTest(TestCase):
                  "url": "job/mytestjob/11/"},
                  "name": "mytestjob",
                  "url": "job/mytestjob/"}
-        response = self._get_response_with_data(finished)
+
+
+        with mock.patch("jenkins.views.import_build") as mock_import_build:
+            response = self._get_response_with_data(finished)
+
         build = Build.objects.get(job=self.job, number=11)
         self.assertEqual("SUCCESS", build.status)
         # This gets properly populated by the task that runs.
         self.assertEqual("job/mytestjob/11/", build.url)
         self.assertEqual("FINISHED", build.phase)
+        mock_import_build.delay.assert_called_once_with(self.job.pk, 11)
 
     def test_handle_finished_notification_with_no_started_build(self):
         """
@@ -150,12 +155,15 @@ class NotificationHandlerTest(TestCase):
                  "name": "mytestjob",
                  "url": "job/mytestjob/"}
 
-        response = self._get_response_with_data(finished)
+        with mock.patch("jenkins.views.import_build") as mock_import_build:
+            response = self._get_response_with_data(finished)
+
         build = Build.objects.get(job=self.job, number=20)
         self.assertEqual("SUCCESS", build.status)
         # This gets properly populated by the task that runs.
         self.assertEqual("job/mytestjob/20/", build.url)
         self.assertEqual("FINISHED", build.phase)
+        mock_import_build.delay.assert_called_once_with(self.job.pk, 20)
 
     def test_handle_finished_notification_with_build_id(self):
         """
@@ -171,9 +179,13 @@ class NotificationHandlerTest(TestCase):
                  "url": "job/mytestjob/20/"},
                  "name": "mytestjob",
                  "url": "job/mytestjob/"}
-        self._get_response_with_data(finished)
+
+        with mock.patch("jenkins.views.import_build") as mock_import_build:
+            response = self._get_response_with_data(finished)
+
         build = Build.objects.get(job=self.job, number=20)
         self.assertEqual("20140312.2", build.build_id)
+        mock_import_build.delay.assert_called_once_with(self.job.pk, 20)
 
 
 class JenkinsServerIndexTest(WebTest):

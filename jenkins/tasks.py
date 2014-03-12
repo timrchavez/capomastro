@@ -8,7 +8,7 @@ logger = get_task_logger(__name__)
 
 
 @shared_task
-def import_build_task(job_id, build_number):
+def import_build(job_id, build_number):
     import_build_for_job(job_id, build_number)
 
 

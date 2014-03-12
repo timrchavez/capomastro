@@ -43,3 +43,8 @@ class BuildJobTaskTest(TestCase):
             self.server.url, username=u"root", password=u"testing")
         mock_jenkins.return_value.build_job.assert_called_with(
             job.name, params={"BUILD_ID": "20140312.1"})
+
+
+class ImportBuildTaskTest(TestCase):
+    pass
+    # TODO: This needs written...
