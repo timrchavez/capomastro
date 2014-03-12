@@ -1,10 +1,33 @@
+from datetime import timedelta
+
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
 from django.template import Template, Context
+from django.utils import timezone
 
 from jenkins.models import Job, Build, Artifact
+from projects.helpers import DefaultSettings
+
+
+def get_notifications_url(host):
+    """
+    Returns the full URL for notifications given a base.
+    """
+    # TODO: This should probably move to the Jenkins app.
+
+
+def get_context_for_template(dependency):
+    """
+    Returns a Context for the Job XML templating.
+    """
+    settings = DefaultSettings({"NOTIFICATION_HOST": "http://localhost"})
+    context_vars = {
+        "notification_host": settings.get_value_or_none("NOTIFICATION_HOST"),
+        "dependency": dependency,
+    }
+    return Context(context_vars)
 
 
 class DependencyType(models.Model):
@@ -24,7 +47,7 @@ class DependencyType(models.Model):
         Parse the config XML as a Django template, replacing {{}} holders etc
         as appropriate.
         """
-        context = Context({"dependency": dependency})
+        context = get_context_for_template(dependency)
         return Template(self.config_xml).render(context)
 
 
@@ -96,6 +119,7 @@ class ProjectBuild(models.Model):
     requested_at = models.DateTimeField(auto_now_add=True)
     ended_at = models.DateTimeField(null=True)
     status = models.CharField(max_length=10, default="INCOMPLETE")
+    build_id = models.CharField(max_length=20)
 
     def __str__(self):
         return self.project.name
@@ -103,6 +127,24 @@ class ProjectBuild(models.Model):
     def create_dependencies(self):
         """
         """
+
+    def save(self, **kwargs):
+        if not self.pk:
+            self.build_id = generate_project_build_id(self)
+        super(ProjectBuild, self).save(**kwargs)
+
+
+def generate_project_build_id(project_build):
+    """
+    Generates a daily-unique id for a given project.
+    """
+    # This is a possible race condition
+    today = timezone.now()
+    filters = {"requested_at__gt": today.replace(hour=0, minute=0, second=0),
+               "requested_at__lte": today.replace(hour=23, minute=59, second=59),
+               "project": project_build.project}
+    today_count = ProjectBuild.objects.filter(**filters).count()
+    return today.strftime("%%Y%%m%%d.%d" % today_count)
 
 
 class ProjectBuildDependency(models.Model):

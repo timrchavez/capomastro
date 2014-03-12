@@ -53,6 +53,7 @@ class Migration(SchemaMigration):
             ('requested_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('ended_at', self.gf('django.db.models.fields.DateTimeField')(null=True)),
             ('status', self.gf('django.db.models.fields.CharField')(default='INCOMPLETE', max_length=10)),
+            ('build_id', self.gf('django.db.models.fields.CharField')(max_length=20)),
         ))
         db.send_create_signal(u'projects', ['ProjectBuild'])
 
@@ -170,6 +171,7 @@ class Migration(SchemaMigration):
         },
         u'projects.projectbuild': {
             'Meta': {'object_name': 'ProjectBuild'},
+            'build_id': ('django.db.models.fields.CharField', [], {'max_length': '20'}),
             'ended_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'project': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['projects.Project']"}),

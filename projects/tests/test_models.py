@@ -1,10 +1,13 @@
 from django.test import TestCase
 from django.test.utils import override_settings
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 from projects.models import (
-    Project, DependencyType, Dependency, ProjectDependency, ProjectBuild)
-from .factories import ProjectFactory, DependencyFactory, DependencyTypeFactory
+    Project, DependencyType, Dependency, ProjectDependency, ProjectBuild,
+    generate_project_build_id)
+from .factories import (
+    ProjectFactory, DependencyFactory, DependencyTypeFactory, ProjectBuildFactory)
 from jenkins.tests.factories import JobFactory, BuildFactory, ArtifactFactory
 
 
@@ -22,17 +25,26 @@ class DependencyTypeTest(TestCase):
         dependency_type = DependencyType.objects.create(
             name="my-test", config_xml="testing xml")
 
-    @override_settings(NOTIFICATION_HOST="http://")
     def test_generate_config_for_dependency(self):
         """
         We can use Django templating in the config.xml and this will be
         interpreted correctly.
         """
         dependency_type = DependencyTypeFactory.create(
-            name="my-test", config_xml=template_config)
+            config_xml=template_config)
         dependency = DependencyFactory.create()
         job_xml = dependency_type.generate_config_for_dependency(dependency)
         self.assertIn(dependency.description, job_xml)
+
+#    @override_settings(NOTIFICATION_HOST="http://example.com")
+#    def test_generate_config_for_dependency_provides_notification_host(self):
+#        """
+#        """
+#        dependency_type = DependencyTypeFactory.create(
+#            config_xml="{{ notification_host }}")
+#        dependency = DependencyFactory.create()
+#        job_xml = dependency_type.generate_config_for_dependency(dependency)
+#        self.assertEqual("http://example.com/jenkins/notifications/", job_xml)
 
 
 class DependencyTest(TestCase):
@@ -145,6 +157,20 @@ class ProjectBuildTest(TestCase):
         self.project = ProjectFactory.create()
         self.user = User.objects.create_user("testing")
 
+    def test_generate_project_build_id(self):
+        """
+        generate_project_build_id should generate an id using the date and the
+        sequence of builds on that date.
+
+        e.g. 20140312.1 is the first build on the 12th March 2014
+        """
+        build1 = ProjectBuildFactory.create()
+        expected_build_id = timezone.now().strftime("%Y%m%d.1")
+        self.assertEqual(expected_build_id, generate_project_build_id(build1))
+        build2 = ProjectBuildFactory.create(project=build1.project)
+        expected_build_id = timezone.now().strftime("%Y%m%d.2")
+        self.assertEqual(expected_build_id, generate_project_build_id(build2))
+
     def test_instantiation(self):
         """
         We can create ProjectBuilds.
@@ -155,6 +181,15 @@ class ProjectBuildTest(TestCase):
         self.assertIsNotNone(project_build.requested_at)
         self.assertIsNone(project_build.ended_at)
         self.assertEqual("INCOMPLETE", project_build.status)
+
+    def test_build_id(self):
+        """
+        When we create a project build, we should create a unique id for the
+        build.
+        """
+        project_build = ProjectBuildFactory.create()
+        expected_build_id = timezone.now().strftime("%Y%m%d.0")
+        self.assertEqual(expected_build_id, project_build.build_id)
 
     def test_create_requirements(self):
         """
