@@ -36,7 +36,7 @@ class Migration(SchemaMigration):
             ('duration', self.gf('django.db.models.fields.IntegerField')(null=True)),
             ('url', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('phase', self.gf('django.db.models.fields.CharField')(max_length=25)),
-            ('result', self.gf('django.db.models.fields.CharField')(max_length=255)),
+            ('status', self.gf('django.db.models.fields.CharField')(max_length=255)),
         ))
         db.send_create_signal(u'jenkins', ['Build'])
 
@@ -80,7 +80,7 @@ class Migration(SchemaMigration):
             'job': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['jenkins.Job']"}),
             'number': ('django.db.models.fields.IntegerField', [], {}),
             'phase': ('django.db.models.fields.CharField', [], {'max_length': '25'}),
-            'result': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'status': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'url': ('django.db.models.fields.CharField', [], {'max_length': '255'})
         },
         u'jenkins.jenkinsserver': {

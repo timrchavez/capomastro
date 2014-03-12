@@ -28,7 +28,7 @@ class BuildFactory(factory.DjangoModelFactory):
     build_id = factory.fuzzy.FuzzyText(length=12)
     number = factory.Sequence(lambda n: n)
     duration = factory.fuzzy.FuzzyInteger(100, 500000)
-    result = "SUCCESS"
+    status = "SUCCESS"
     phase = "STARTED"
     url = factory.Sequence(lambda n: "http://www.example.com/job/%d" % n)
 

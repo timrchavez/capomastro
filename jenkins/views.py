@@ -1,8 +1,6 @@
 import json
 import logging
 
-import pprint
-
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.views.generic import View, ListView, DetailView, TemplateView
@@ -37,23 +35,36 @@ class NotificationHandlerView(CsrfExemptMixin, View):
             return HttpResponse(status=412)
         notification = json.loads(request.body)
 
-        pprint.pprint(notification)
+        try:
+            job = server.job_set.get(name=notification["name"])
+        except Job.DoesNotExist:
+            logging.warn(
+                "Notification for unknown job '%s'" % notification["name"])
+            return HttpResponse(status=412)
+
+        build_id = ""
+        build_number = notification["build"]["number"]
+        build_phase = notification["build"]["phase"]
+        if "parameters" in notification["build"]:
+            build_id = notification["build"]["parameters"].get("BUILD_ID")
 
         if notification["build"]["phase"] == "STARTED":
-            pprint.pprint(notification)
+            job.build_set.create(
+                number=build_number, build_id=build_id, phase=build_phase)
         elif notification["build"]["phase"] == "FINISHED":
+            build_status = notification["build"]["status"]
+            build_url = notification["build"]["url"]
             try:
-                job = server.job_set.get(name=notification["name"])
-            except Job.DoesNotExist:
-                logging.warn(
-                    "Notification for unknown job '%s'" % notification["name"])
-                return HttpResponse(status=412)
-            else:
+                existing_build = job.build_set.get(number=build_number)
+            except Build.DoesNotExist:
                 job.build_set.create(
-                    number=notification["build"]["number"],
-                    result=notification["build"]["status"],
-                    url=notification["build"]["url"],
-                    phase=notification["build"]["phase"])
+                    number=build_number, build_id=build_id, phase=build_phase,
+                    status=build_status, url=build_url)
+            else:
+                existing_build.status = build_status
+                existing_build.phase = build_phase
+                existing_build.url = build_url
+                existing_build.save()
                 # TODO: Mock this out in tests...
                 # import_build_task.delay(job.pk, notification["build"]["number"])
         return HttpResponse(status=200)

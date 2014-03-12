@@ -39,7 +39,7 @@ class Build(models.Model):
     duration = models.IntegerField(null=True)
     url = models.CharField(max_length=255)
     phase = models.CharField(max_length=25) # FINISHED, STARTED, COMPLETED
-    result = models.CharField(max_length=255)
+    status = models.CharField(max_length=255)
 
     class Meta:
         ordering = ["-number"]

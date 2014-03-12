@@ -17,7 +17,7 @@ def import_build_for_job(job_id, build_number):
     build_result = jenkins_job.get_build(build_number)
     # TODO: Shouldn't access _data here.
     build_details = {
-        "result": build_result.get_status(),
+        "status": build_result.get_status(),
         "build_id": build_result._data["id"],
         "duration": build_result._data["duration"],
         "url": build_result.get_result_url()
@@ -57,7 +57,7 @@ def import_builds_for_job(job_id):
         # TODO: Shouldn't access _data here.
         build_details = {
             "job": job,
-            "result": build_result.get_status(),
+            "status": build_result.get_status(),
             "build_id": build_result._data["id"],
             "number": build_result.buildno,
             "duration": build_result._data["duration"],

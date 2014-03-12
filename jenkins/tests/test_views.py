@@ -49,7 +49,10 @@ class NotificationHandlerTest(TestCase):
         NOTE: The Jenkins notification plugin doesn't seem to care what response
         we send back...
         """
-        notification = {"name": "unknown job", "build": {"phase": "FINISHED"}}
+        notification = {
+            "name": "unknown job",
+            "build": {"phase": "FINISHED", "number": 10}
+        }
         with patch("jenkins.views.logging") as mock_logging:
             response = self._get_response_with_data(
                 notification)
@@ -68,15 +71,35 @@ class NotificationHandlerTest(TestCase):
                 "url": "job/mytestjob/11/"},
             "name": "mytestjob",
             "url": "job/mytestjob/"}
-        response = self._get_response_with_data(started)
-        # TODO: We should create a build and use this to determine whether or
-        # not we have a current build in progress.
-        self.assertEqual(0, Build.objects.count())
+        self._get_response_with_data(started)
+
+        self.assertEqual(1, Build.objects.count())
+        build = Build.objects.get(job=self.job, number=11)
+        self.assertEqual("", build.status)
+        self.assertEqual("STARTED", build.phase)
+
+    def test_handle_started_notification_with_build_id(self):
+        """
+        If we have parameters and a BUILD_ID in the parameters, then we should
+        store the BUILD_ID in the build.
+        """
+        started = {
+            "build": {
+                "number": 11,
+                "phase": "STARTED",
+                "parameters": {"BUILD_ID": "20140312.2"},
+                "url": "job/mytestjob/11/"},
+            "name": "mytestjob",
+            "url": "job/mytestjob/"}
+        self._get_response_with_data(started)
+
+        build = Build.objects.get(job=self.job, number=11)
+        self.assertEqual("20140312.2", build.build_id)
 
     def test_handle_completed_notification(self):
         """
-        When a build starts we get a COMPLETED notification, we should not
-        create a build for this phase.
+        When a build starts we get a COMPLETED notification, we don't do
+        anything for this phase.
         """
         completed = {
             "build": {
@@ -86,7 +109,7 @@ class NotificationHandlerTest(TestCase):
                  "url": "job/mytestjob/11/"},
                  "name": "mytestjob",
                  "url": "job/mytestjob/"}
-        response = self._get_response_with_data(completed)
+        self._get_response_with_data(completed)
         self.assertEqual(0, Build.objects.count())
 
     def test_handle_finished_notification(self):
@@ -95,6 +118,9 @@ class NotificationHandlerTest(TestCase):
         FINISHED notification, this should trigger creation of a Build
         representing the FINISHED build.
         """
+        self.job.build_set.create(
+            number=11,
+            phase="STARTED")
         finished = {
             "build": {
                  "number": 11,
@@ -105,10 +131,49 @@ class NotificationHandlerTest(TestCase):
                  "url": "job/mytestjob/"}
         response = self._get_response_with_data(finished)
         build = Build.objects.get(job=self.job, number=11)
-        self.assertEqual("SUCCESS", build.result)
+        self.assertEqual("SUCCESS", build.status)
         # This gets properly populated by the task that runs.
         self.assertEqual("job/mytestjob/11/", build.url)
         self.assertEqual("FINISHED", build.phase)
+
+    def test_handle_finished_notification_with_no_started_build(self):
+        """
+        If we get a finished notfication for a build we don't have any
+        previous record of, we should still store it.
+        """
+        finished = {
+            "build": {
+                 "number": 20,
+                 "phase": "FINISHED",
+                 "status": "SUCCESS",
+                 "url": "job/mytestjob/20/"},
+                 "name": "mytestjob",
+                 "url": "job/mytestjob/"}
+
+        response = self._get_response_with_data(finished)
+        build = Build.objects.get(job=self.job, number=20)
+        self.assertEqual("SUCCESS", build.status)
+        # This gets properly populated by the task that runs.
+        self.assertEqual("job/mytestjob/20/", build.url)
+        self.assertEqual("FINISHED", build.phase)
+
+    def test_handle_finished_notification_with_build_id(self):
+        """
+        If we get a finished notfication for a build_id we don't have any
+        previous record of, we should still store it.
+        """
+        finished = {
+            "build": {
+                 "number": 20,
+                 "phase": "FINISHED",
+                 "status": "SUCCESS",
+                 "parameters": {"BUILD_ID": "20140312.2"},
+                 "url": "job/mytestjob/20/"},
+                 "name": "mytestjob",
+                 "url": "job/mytestjob/"}
+        self._get_response_with_data(finished)
+        build = Build.objects.get(job=self.job, number=20)
+        self.assertEqual("20140312.2", build.build_id)
 
 
 class JenkinsServerIndexTest(WebTest):
