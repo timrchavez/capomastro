@@ -13,11 +13,16 @@ def import_build_task(job_id, build_number):
 
 
 @shared_task
-def build_job(job_pk):
+def build_job(job_pk, build_id=None):
     """
     Request building Job.
     """
+    # TODO: If a job is already queued, then this can throw
+    # WillNotBuild: <jenkinsapi.job.Job job> is already queued
+    # Should we check for it being queued? with is_queued_or_running?
     job = Job.objects.get(pk=job_pk)
     client = job.server.get_client()
-
-    client.build_job(job.name)
+    params = {}
+    if build_id is not None:
+        params["BUILD_ID"] = build_id
+    client.build_job(job.name, params=params)

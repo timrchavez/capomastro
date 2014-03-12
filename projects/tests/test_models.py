@@ -190,12 +190,3 @@ class ProjectBuildTest(TestCase):
         project_build = ProjectBuildFactory.create()
         expected_build_id = timezone.now().strftime("%Y%m%d.0")
         self.assertEqual(expected_build_id, project_build.build_id)
-
-    def test_create_requirements(self):
-        """
-        ProjectBuild.create_dependencies has build dependencies with versions
-        for each of the dependencies at the time of the call.
-        """
-        project_build = ProjectBuild.objects.create(
-            project=self.project, requested_by=self.user)
-        project_build.create_dependencies()

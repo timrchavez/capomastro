@@ -49,7 +49,7 @@ class Migration(SchemaMigration):
         db.create_table(u'projects_projectbuild', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('project', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['projects.Project'])),
-            ('requested_by', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'])),
+            ('requested_by', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['auth.User'], null=True, blank=True)),
             ('requested_at', self.gf('django.db.models.fields.DateTimeField')(auto_now_add=True, blank=True)),
             ('ended_at', self.gf('django.db.models.fields.DateTimeField')(null=True)),
             ('status', self.gf('django.db.models.fields.CharField')(default='INCOMPLETE', max_length=10)),
@@ -176,7 +176,7 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'project': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['projects.Project']"}),
             'requested_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
-            'requested_by': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']"}),
+            'requested_by': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']", 'null': 'True', 'blank': 'True'}),
             'status': ('django.db.models.fields.CharField', [], {'default': "'INCOMPLETE'", 'max_length': '10'})
         },
         u'projects.projectbuilddependency': {

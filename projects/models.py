@@ -115,7 +115,7 @@ class ProjectBuild(models.Model):
     """Represents a requested build of a Project."""
 
     project = models.ForeignKey(Project)
-    requested_by = models.ForeignKey(User)
+    requested_by = models.ForeignKey(User, null=True, blank=True)
     requested_at = models.DateTimeField(auto_now_add=True)
     ended_at = models.DateTimeField(null=True)
     status = models.CharField(max_length=10, default="INCOMPLETE")
@@ -137,6 +137,8 @@ class ProjectBuild(models.Model):
 def generate_project_build_id(project_build):
     """
     Generates a daily-unique id for a given project.
+
+    # TODO: Should this drop the ".0" when there's no previous builds?
     """
     # This is a possible race condition
     today = timezone.now()

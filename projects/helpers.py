@@ -1,5 +1,7 @@
 from django.conf import settings
 
+from jenkins.tasks import build_job
+
 
 class DefaultSettings(object):
     """
@@ -25,3 +27,14 @@ class DefaultSettings(object):
         Doesn't raise an AttributeError in the event that the key doesn't exist.
         """
         return getattr(settings, key, getattr(self.defaults, key, None))
+
+
+def build_project(project, user=None):
+    """
+    Given a build, schedule building each of its dependencies.
+    """
+    from projects.models import ProjectBuild
+    build = ProjectBuild.objects.create(
+        project=project, requested_by=user)
+
+    return build
