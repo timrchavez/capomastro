@@ -12,12 +12,14 @@
       <thead>
         <tr>
           <th>Name</th>
+          <th>&nbsp;</th>
         </tr>
       </thead>
       <tbody>
         {% for project in object_list %}
         <tr>
           <td><a href="{% url 'projects_detail' project.pk %}">{{ project.name }}</a></td>
+          <td><a href="{% url 'projects_project_build_list' pk=project.pk %}">Builds</a></td>
         </tr>
         {% endfor %}
       </tbody>

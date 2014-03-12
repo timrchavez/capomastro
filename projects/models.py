@@ -101,6 +101,9 @@ class Project(models.Model):
 
     def get_current_artifacts(self):
         """
+        Returns a QuerySet of Artifact objects representing the Artifacts
+        associated with the project dependencies at their current dependency
+        level.
         """
         current_builds = []
         for dependency in ProjectDependency.objects.filter(project=self):
@@ -124,9 +127,13 @@ class ProjectBuild(models.Model):
     def __str__(self):
         return self.project.name
 
-    def create_dependencies(self):
+    def get_current_artifacts(self):
         """
+        Returns a QuerySet of Artifact objects representing the Artifacts
+        associated with the builds of the project dependencies for this
+        project build.
         """
+        return Artifact.objects.filter(build__build_id=self.build_id)
 
     def save(self, **kwargs):
         if not self.pk:

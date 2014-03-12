@@ -9,6 +9,7 @@ import mock
 
 from projects.models import ProjectDependency, Project, ProjectBuild
 from .factories import ProjectFactory, DependencyFactory
+from jenkins.tests.factories import BuildFactory, JobFactory
 
 # TODO Introduce subclass of WebTest that allows easy assertions that a page
 # requires various permissions...
@@ -113,6 +114,39 @@ class ProjectBuildViewTest(WebTest):
 
         mock_build_project.assert_called_once_with(project)
         self.assertEqual(200, response.status_code)
-        import pdb; pdb.set_trace()
         self.assertContains(
             response, "Build '20140312.1' Queued.")
+
+
+class ProjectBuildListViewTest(WebTest):
+
+    def setUp(self):
+        self.user = User.objects.create_user("testing")
+
+    def test_page_requires_authenticated_user(self):
+        """
+        """
+        # TODO: We should assert that requests without a logged in user
+        # get redirected to login.
+
+    def test_project_build_list_view(self):
+        """
+        The detail view should render the server and jobs for the server.
+        """
+        job = JobFactory.create()
+        BuildFactory.create_batch(5, job=job)
+
+        project = ProjectFactory.create()
+
+        dependency = ProjectDependency.objects.create(
+            project=project, dependency=DependencyFactory.create(job=job))
+        project_build = ProjectBuild.objects.create(project=project)
+        builds = BuildFactory.create(job=job, build_id=project_build.build_id)
+
+        url = reverse("projects_project_build_list", kwargs={"pk": project.pk})
+        response = self.app.get(url, user="testing")
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(
+            set([project_build]), set(response.context["project_builds"]))
+        self.assertEqual(project, response.context["project"])

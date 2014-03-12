@@ -18,7 +18,9 @@ def import_build_for_job(job_id, build_number):
     # TODO: Shouldn't access _data here.
     build_details = {
         "status": build_result.get_status(),
-        "build_id": build_result._data["id"],
+        # TODO: What should we do with this ID we get from Jenkins?
+        # Discard? or only set it if we don't have one?
+        # "build_id": build_result._data["id"],
         "duration": build_result._data["duration"],
         "url": build_result.get_result_url()
     }
