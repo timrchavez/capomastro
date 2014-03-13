@@ -105,9 +105,9 @@ class ProjectBuildViewTest(WebTest):
             project=project, dependency=DependencyFactory.create())
         project_url = reverse("projects_detail", kwargs={"pk": project.pk})
 
-        project_build = ProjectBuildFactory.create(project=project)
+        projectbuild = ProjectBuildFactory.create(project=project)
         with mock.patch("projects.views.build_project") as mock_build_project:
-            mock_build_project.return_value = project_build
+            mock_build_project.return_value = projectbuild
             response = self.app.get(project_url, user="testing")
             response = response.forms["build-project"].submit().follow()
 
@@ -115,10 +115,10 @@ class ProjectBuildViewTest(WebTest):
         self.assertEqual(200, response.status_code)
 
         self.assertEqual(
-            "Project Build %s" % project_build.build_id,
+            "Project Build %s" % projectbuild.build_id,
             response.html.title.text)
         self.assertContains(
-            response, "Build '%s' Queued." % project_build.build_id)
+            response, "Build '%s' Queued." % projectbuild.build_id)
 
 
 class ProjectBuildListViewTest(WebTest):
@@ -132,7 +132,7 @@ class ProjectBuildListViewTest(WebTest):
         # TODO: We should assert that requests without a logged in user
         # get redirected to login.
 
-    def test_project_build_list_view(self):
+    def test_projectbuild_list_view(self):
         """
         The detail view should render the server and jobs for the server.
         """
@@ -143,13 +143,13 @@ class ProjectBuildListViewTest(WebTest):
 
         dependency = ProjectDependency.objects.create(
             project=project, dependency=DependencyFactory.create(job=job))
-        project_build = ProjectBuildFactory.create(project=project)
-        builds = BuildFactory.create(job=job, build_id=project_build.build_id)
+        projectbuild = ProjectBuildFactory.create(project=project)
+        builds = BuildFactory.create(job=job, build_id=projectbuild.build_id)
 
-        url = reverse("projects_project_build_list", kwargs={"pk": project.pk})
+        url = reverse("projects_projectbuild_list", kwargs={"pk": project.pk})
         response = self.app.get(url, user="testing")
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(
-            set([project_build]), set(response.context["project_builds"]))
+            set([projectbuild]), set(response.context["projectbuilds"]))
         self.assertEqual(project, response.context["project"])

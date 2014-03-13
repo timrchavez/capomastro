@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from projects.models import (
     Project, DependencyType, Dependency, ProjectDependency, ProjectBuild,
-    generate_project_build_id)
+    generate_projectbuild_id)
 from .factories import (
     ProjectFactory, DependencyFactory, DependencyTypeFactory, ProjectBuildFactory)
 from jenkins.tests.factories import JobFactory, BuildFactory, ArtifactFactory
@@ -157,36 +157,36 @@ class ProjectBuildTest(TestCase):
         self.project = ProjectFactory.create()
         self.user = User.objects.create_user("testing")
 
-    def test_generate_project_build_id(self):
+    def test_generate_projectbuild_id(self):
         """
-        generate_project_build_id should generate an id using the date and the
+        generate_projectbuild_id should generate an id using the date and the
         sequence of builds on that date.
 
         e.g. 20140312.1 is the first build on the 12th March 2014
         """
         build1 = ProjectBuildFactory.create()
         expected_build_id = timezone.now().strftime("%Y%m%d.1")
-        self.assertEqual(expected_build_id, generate_project_build_id(build1))
+        self.assertEqual(expected_build_id, generate_projectbuild_id(build1))
         build2 = ProjectBuildFactory.create(project=build1.project)
         expected_build_id = timezone.now().strftime("%Y%m%d.2")
-        self.assertEqual(expected_build_id, generate_project_build_id(build2))
+        self.assertEqual(expected_build_id, generate_projectbuild_id(build2))
 
     def test_instantiation(self):
         """
         We can create ProjectBuilds.
         """
-        project_build = ProjectBuild.objects.create(
+        projectbuild = ProjectBuild.objects.create(
             project=self.project, requested_by=self.user)
-        self.assertEqual(self.user, project_build.requested_by)
-        self.assertIsNotNone(project_build.requested_at)
-        self.assertIsNone(project_build.ended_at)
-        self.assertEqual("INCOMPLETE", project_build.status)
+        self.assertEqual(self.user, projectbuild.requested_by)
+        self.assertIsNotNone(projectbuild.requested_at)
+        self.assertIsNone(projectbuild.ended_at)
+        self.assertEqual("INCOMPLETE", projectbuild.status)
 
     def test_build_id(self):
         """
         When we create a project build, we should create a unique id for the
         build.
         """
-        project_build = ProjectBuildFactory.create()
+        projectbuild = ProjectBuildFactory.create()
         expected_build_id = timezone.now().strftime("%Y%m%d.0")
-        self.assertEqual(expected_build_id, project_build.build_id)
+        self.assertEqual(expected_build_id, projectbuild.build_id)

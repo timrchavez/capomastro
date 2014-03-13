@@ -137,11 +137,11 @@ class ProjectBuild(models.Model):
 
     def save(self, **kwargs):
         if not self.pk:
-            self.build_id = generate_project_build_id(self)
+            self.build_id = generate_projectbuild_id(self)
         super(ProjectBuild, self).save(**kwargs)
 
 
-def generate_project_build_id(project_build):
+def generate_projectbuild_id(projectbuild):
     """
     Generates a daily-unique id for a given project.
 
@@ -151,14 +151,10 @@ def generate_project_build_id(project_build):
     today = timezone.now()
     filters = {"requested_at__gt": today.replace(hour=0, minute=0, second=0),
                "requested_at__lte": today.replace(hour=23, minute=59, second=59),
-               "project": project_build.project}
+               "project": projectbuild.project}
     today_count = ProjectBuild.objects.filter(**filters).count()
     return today.strftime("%%Y%%m%%d.%d" % today_count)
 
-
-class ProjectBuildDependency(models.Model):
-    """
-    """
 
 
 @receiver(post_save, sender=Build, dispatch_uid="new_build_handler")

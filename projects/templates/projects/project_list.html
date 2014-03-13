@@ -13,7 +13,7 @@
         <tr>
           <th>Name</th>
           <th>Description</th>
-          <th>&nbsp;</th>
+          <th>Builds</th>
         </tr>
       </thead>
       <tbody>
@@ -21,7 +21,7 @@
         <tr>
           <td><a href="{% url 'projects_detail' project.pk %}">{{ project.name }}</a></td>
           <td>{{ project.description }}</td>
-          <td><a href="{% url 'projects_project_build_list' pk=project.pk %}">Builds</a></td>
+          <td><a href="{% url 'projects_projectbuild_list' pk=project.pk %}">{{ project.projectbuild_set.count }}</a></td>
         </tr>
         {% endfor %}
       </tbody>

@@ -36,18 +36,18 @@ class InitiateProjectBuildView(LoginRequiredMixin, View):
 
     def post(self, request, pk):
         project = Project.objects.get(pk=pk)
-        project_build = build_project(project)
+        projectbuild = build_project(project)
         messages.add_message(
-            request, messages.INFO, "Build '%s' Queued." % project_build.build_id)
+            request, messages.INFO, "Build '%s' Queued." % projectbuild.build_id)
 
-        url_args = {"project_pk": project.pk, "build_pk": project_build.pk}
-        url = reverse("projects_project_build_detail", kwargs=url_args)
+        url_args = {"project_pk": project.pk, "build_pk": projectbuild.pk}
+        url = reverse("projects_projectbuild_detail", kwargs=url_args)
         return HttpResponseRedirect(url)
 
 
 class ProjectBuildListView(LoginRequiredMixin, ListView):
 
-    context_object_name = "project_builds"
+    context_object_name = "projectbuilds"
     model = ProjectBuild
 
     def get_queryset(self):
@@ -58,7 +58,7 @@ class ProjectBuildListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         """
-        Supplement the project_builds with the project:
+        Supplement the projectbuilds with the project:
         """
         context = super(
             ProjectBuildListView, self).get_context_data(**kwargs)
@@ -68,7 +68,7 @@ class ProjectBuildListView(LoginRequiredMixin, ListView):
 
 class ProjectBuildDetailView(LoginRequiredMixin, DetailView):
 
-    context_object_name = "project_build"
+    context_object_name = "projectbuild"
     model = ProjectBuild
 
     def get_object(self):
@@ -78,17 +78,17 @@ class ProjectBuildDetailView(LoginRequiredMixin, DetailView):
     def _get_project_from_url(self):
         return get_object_or_404(Project, pk=self.kwargs["project_pk"])
 
-    def _get_related_builds(self, project_build):
-        return Build.objects.filter(build_id=project_build.build_id)
+    def _get_related_builds(self, projectbuild):
+        return Build.objects.filter(build_id=projectbuild.build_id)
 
     def get_context_data(self, **kwargs):
         """
-        Supplement the project_builds with the project:
+        Supplement the projectbuilds with the project:
         """
         context = super(
             ProjectBuildDetailView, self).get_context_data(**kwargs)
         context["project"] = self._get_project_from_url()
-        context["builds"] = self._get_related_builds(context["project_build"])
+        context["builds"] = self._get_related_builds(context["projectbuild"])
         return context
 
 
