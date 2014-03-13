@@ -36,7 +36,7 @@ class InitiateProjectBuildView(LoginRequiredMixin, View):
 
     def post(self, request, pk):
         project = Project.objects.get(pk=pk)
-        projectbuild = build_project(project)
+        projectbuild = build_project(project, user=request.user)
         messages.add_message(
             request, messages.INFO, "Build '%s' Queued." % projectbuild.build_id)
 

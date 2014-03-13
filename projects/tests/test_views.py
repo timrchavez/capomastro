@@ -83,6 +83,17 @@ class ProjectCreateTest(WebTest):
         """
         The project name should be unique.
         """
+        project = ProjectFactory.create(name="My Project")
+
+        project_url = reverse("projects_create")
+        response = self.app.get(project_url, user="testing")
+        form = response.forms["create-project"]
+        form["dependencies"].select_multiple(
+            [self.dependency1.pk])
+        form["name"].value = "My Project"
+
+        response = form.submit()
+        self.assertContains(response, "Project with this Name already exists.")
 
 
 class ProjectBuildViewTest(WebTest):
@@ -111,7 +122,7 @@ class ProjectBuildViewTest(WebTest):
             response = self.app.get(project_url, user="testing")
             response = response.forms["build-project"].submit().follow()
 
-        mock_build_project.assert_called_once_with(project)
+        mock_build_project.assert_called_once_with(project, user=self.user)
         self.assertEqual(200, response.status_code)
 
         self.assertEqual(

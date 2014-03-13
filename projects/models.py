@@ -11,13 +11,6 @@ from jenkins.models import Job, Build, Artifact
 from projects.helpers import DefaultSettings
 
 
-def get_notifications_url(host):
-    """
-    Returns the full URL for notifications given a base.
-    """
-    # TODO: This should probably move to the Jenkins app.
-
-
 def get_context_for_template(dependency):
     """
     Returns a Context for the Job XML templating.
@@ -95,7 +88,7 @@ class ProjectDependency(models.Model):
 
 class Project(models.Model):
 
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     description = models.TextField(null=True, blank=True)
     dependencies = models.ManyToManyField(Dependency, through=ProjectDependency)
 
