@@ -15,14 +15,16 @@ from projects.helpers import build_project
 
 
 class ProjectCreateView(
-    LoginRequiredMixin, PermissionRequiredMixin,
-    SuccessURLRedirectListMixin, FormValidMessageMixin, CreateView):
+    LoginRequiredMixin, PermissionRequiredMixin, FormValidMessageMixin,
+    CreateView):
 
     permission_required = "projects.add_project"
-    success_list_url = "projects_index"
     form_valid_message = "Project created"
     model = Project
     form_class = ProjectForm
+
+    def get_success_url(self):
+      return reverse("projects_detail", kwargs={"pk": self.object.pk})
 
 
 class ProjectListView(LoginRequiredMixin, ListView):
@@ -37,7 +39,10 @@ class InitiateProjectBuildView(LoginRequiredMixin, View):
         project_build = build_project(project)
         messages.add_message(
             request, messages.INFO, "Build '%s' Queued." % project_build.build_id)
-        return HttpResponseRedirect(reverse("projects_index"))
+
+        url_args = {"project_pk": project.pk, "build_pk": project_build.pk}
+        url = reverse("projects_project_build_detail", kwargs=url_args)
+        return HttpResponseRedirect(url)
 
 
 class ProjectBuildListView(LoginRequiredMixin, ListView):
@@ -59,7 +64,6 @@ class ProjectBuildListView(LoginRequiredMixin, ListView):
             ProjectBuildListView, self).get_context_data(**kwargs)
         context["project"] = self._get_project_from_url()
         return context
-
 
 
 class ProjectBuildDetailView(LoginRequiredMixin, DetailView):

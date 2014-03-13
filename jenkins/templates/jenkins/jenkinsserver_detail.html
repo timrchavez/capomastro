@@ -24,7 +24,7 @@
         {% for job in jobs %}
         <tr>
           <td><a href="">{{ job.name }}</a></td>
-          <td><a href="">{{ job.build_set.count }}</a></td>
+          <td><a href="{% url 'jenkinsserver_job_builds_index' server_pk=server.pk job_pk=job.pk %}">{{ job.build_set.count }}</a></td>
         </tr>
         {% endfor %}
       </tbody>

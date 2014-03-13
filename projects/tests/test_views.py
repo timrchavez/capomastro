@@ -8,7 +8,7 @@ from django_webtest import WebTest
 import mock
 
 from projects.models import ProjectDependency, Project, ProjectBuild
-from .factories import ProjectFactory, DependencyFactory
+from .factories import ProjectFactory, DependencyFactory, ProjectBuildFactory
 from jenkins.tests.factories import BuildFactory, JobFactory
 
 # TODO Introduce subclass of WebTest that allows easy assertions that a page
@@ -105,8 +105,7 @@ class ProjectBuildViewTest(WebTest):
             project=project, dependency=DependencyFactory.create())
         project_url = reverse("projects_detail", kwargs={"pk": project.pk})
 
-        project_build = mock.MagicMock(autospec=ProjectBuild)
-        project_build.build_id = "20140312.1"
+        project_build = ProjectBuildFactory.create(project=project)
         with mock.patch("projects.views.build_project") as mock_build_project:
             mock_build_project.return_value = project_build
             response = self.app.get(project_url, user="testing")
@@ -114,8 +113,12 @@ class ProjectBuildViewTest(WebTest):
 
         mock_build_project.assert_called_once_with(project)
         self.assertEqual(200, response.status_code)
+
+        self.assertEqual(
+            "Project Build %s" % project_build.build_id,
+            response.html.title.text)
         self.assertContains(
-            response, "Build '20140312.1' Queued.")
+            response, "Build '%s' Queued." % project_build.build_id)
 
 
 class ProjectBuildListViewTest(WebTest):
@@ -140,7 +143,7 @@ class ProjectBuildListViewTest(WebTest):
 
         dependency = ProjectDependency.objects.create(
             project=project, dependency=DependencyFactory.create(job=job))
-        project_build = ProjectBuild.objects.create(project=project)
+        project_build = ProjectBuildFactory.create(project=project)
         builds = BuildFactory.create(job=job, build_id=project_build.build_id)
 
         url = reverse("projects_project_build_list", kwargs={"pk": project.pk})

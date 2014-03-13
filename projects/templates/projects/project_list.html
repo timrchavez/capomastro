@@ -12,6 +12,7 @@
       <thead>
         <tr>
           <th>Name</th>
+          <th>Description</th>
           <th>&nbsp;</th>
         </tr>
       </thead>
@@ -19,12 +20,13 @@
         {% for project in object_list %}
         <tr>
           <td><a href="{% url 'projects_detail' project.pk %}">{{ project.name }}</a></td>
+          <td>{{ project.description }}</td>
           <td><a href="{% url 'projects_project_build_list' pk=project.pk %}">Builds</a></td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
-    <p><a href="{% url 'projects_create' %}" class="btn btn-primary btn-lg" role="button">Create »</a></p>
+    <p><a href="{% url 'projects_create' %}" class="btn btn-primary" role="button">Create new project »</a></p>
   </div>
 </div>
 {% endblock %}
