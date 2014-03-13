@@ -8,6 +8,7 @@ from django.template import Template, Context
 from django.utils import timezone
 
 from jenkins.models import Job, Build, Artifact
+from jenkins.utils import get_notifications_url
 from projects.helpers import DefaultSettings
 
 
@@ -16,8 +17,9 @@ def get_context_for_template(dependency):
     Returns a Context for the Job XML templating.
     """
     settings = DefaultSettings({"NOTIFICATION_HOST": "http://localhost"})
+    notifications_url = get_notifications_url(settings.NOTIFICATION_HOST)
     context_vars = {
-        "notification_host": settings.get_value_or_none("NOTIFICATION_HOST"),
+        "notification_host": get_notifications_url(settings.NOTIFICATION_HOST),
         "dependency": dependency,
     }
     return Context(context_vars)

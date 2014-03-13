@@ -36,15 +36,15 @@ class DependencyTypeTest(TestCase):
         job_xml = dependency_type.generate_config_for_dependency(dependency)
         self.assertIn(dependency.description, job_xml)
 
-#    @override_settings(NOTIFICATION_HOST="http://example.com")
-#    def test_generate_config_for_dependency_provides_notification_host(self):
-#        """
-#        """
-#        dependency_type = DependencyTypeFactory.create(
-#            config_xml="{{ notification_host }}")
-#        dependency = DependencyFactory.create()
-#        job_xml = dependency_type.generate_config_for_dependency(dependency)
-#        self.assertEqual("http://example.com/jenkins/notifications/", job_xml)
+    @override_settings(NOTIFICATION_HOST="http://example.com")
+    def test_generate_config_for_dependency_provides_notification_host(self):
+        """
+        """
+        dependency_type = DependencyTypeFactory.create(
+            config_xml="{{ notification_host }}")
+        dependency = DependencyFactory.create()
+        job_xml = dependency_type.generate_config_for_dependency(dependency)
+        self.assertEqual("http://example.com/jenkins/notifications/", job_xml)
 
 
 class DependencyTest(TestCase):
