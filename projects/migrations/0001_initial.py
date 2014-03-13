@@ -40,7 +40,7 @@ class Migration(SchemaMigration):
         # Adding model 'Project'
         db.create_table(u'projects_project', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(unique=True, max_length=255)),
+            ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
             ('description', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
         ))
         db.send_create_signal(u'projects', ['Project'])
@@ -56,6 +56,12 @@ class Migration(SchemaMigration):
             ('build_id', self.gf('django.db.models.fields.CharField')(max_length=20)),
         ))
         db.send_create_signal(u'projects', ['ProjectBuild'])
+
+        # Adding model 'ProjectBuildDependency'
+        db.create_table(u'projects_projectbuilddependency', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+        ))
+        db.send_create_signal(u'projects', ['ProjectBuildDependency'])
 
 
     def backwards(self, orm):
@@ -73,6 +79,9 @@ class Migration(SchemaMigration):
 
         # Deleting model 'ProjectBuild'
         db.delete_table(u'projects_projectbuild')
+
+        # Deleting model 'ProjectBuildDependency'
+        db.delete_table(u'projects_projectbuilddependency')
 
 
     models = {
@@ -120,7 +129,7 @@ class Migration(SchemaMigration):
             'job': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['jenkins.Job']"}),
             'number': ('django.db.models.fields.IntegerField', [], {}),
             'phase': ('django.db.models.fields.CharField', [], {'max_length': '25'}),
-            'status': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'result': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'url': ('django.db.models.fields.CharField', [], {'max_length': '255'})
         },
         u'jenkins.jenkinsserver': {
@@ -158,7 +167,7 @@ class Migration(SchemaMigration):
             'dependencies': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['projects.Dependency']", 'through': u"orm['projects.ProjectDependency']", 'symmetrical': 'False'}),
             'description': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '255'})
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'})
         },
         u'projects.projectbuild': {
             'Meta': {'object_name': 'ProjectBuild'},
@@ -169,6 +178,10 @@ class Migration(SchemaMigration):
             'requested_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'requested_by': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']", 'null': 'True', 'blank': 'True'}),
             'status': ('django.db.models.fields.CharField', [], {'default': "'INCOMPLETE'", 'max_length': '10'})
+        },
+        u'projects.projectbuilddependency': {
+            'Meta': {'object_name': 'ProjectBuildDependency'},
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         u'projects.projectdependency': {
             'Meta': {'object_name': 'ProjectDependency'},
