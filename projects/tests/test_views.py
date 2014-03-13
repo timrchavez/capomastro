@@ -72,12 +72,35 @@ class ProjectCreateTest(WebTest):
         response = form.submit()
 
         project = Project.objects.get(name="My Project")
-        # TODO: Check that the dependencies are not auto-tracked.
+        dependencies = ProjectDependency.objects.filter(project=project)
+
+        self.assertEqual(
+            [False, False],
+            list(dependencies.values_list("auto_track", flat=True)))
+        self.assertEqual(
+            set([self.dependency1.name, self.dependency2.name]),
+            set(dependencies.values_list("dependency__name", flat=True)))
 
     def test_create_project_with_auto_track(self):
         """
         We can set the auto_track on dependencies of the project.
         """
+        project_url = reverse("projects_create")
+        response = self.app.get(project_url, user="testing")
+        form = response.forms["create-project"]
+        form["dependencies"].select_multiple(
+            [self.dependency1.pk, self.dependency2.pk])
+        form["name"].value = "My Project"
+        form["auto_track"].value = True
+
+        response = form.submit()
+
+        project = Project.objects.get(name="My Project")
+        dependencies = ProjectDependency.objects.filter(project=project)
+
+        self.assertEqual(
+            [True, True],
+            list(dependencies.values_list("auto_track", flat=True)))
 
     def test_create_project_non_unique_name(self):
         """

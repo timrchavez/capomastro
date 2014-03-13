@@ -143,7 +143,7 @@ def generate_projectbuild_id(projectbuild):
     """
     Generates a daily-unique id for a given project.
 
-    # TODO: Should this drop the ".0" when there's no previous builds?
+    TODO: Should this drop the ".0" when there's no previous builds?
     """
     # This is a possible race condition
     today = timezone.now()

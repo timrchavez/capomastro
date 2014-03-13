@@ -3,7 +3,7 @@ import logging
 from django.test import TestCase
 from django.test.utils import override_settings
 
-from mock import patch, call
+import mock
 
 from jenkins.tasks import build_job
 from jenkins.models import JenkinsServer
@@ -22,7 +22,7 @@ class BuildJobTaskTest(TestCase):
         the job be built.
         """
         job = JobFactory.create(server=self.server)
-        with patch("jenkins.models.Jenkins", spec=True) as mock_jenkins:
+        with mock.patch("jenkins.models.Jenkins", spec=True) as mock_jenkins:
             build_job(job.pk)
 
         mock_jenkins.assert_called_with(
@@ -36,7 +36,7 @@ class BuildJobTaskTest(TestCase):
         If we provide a build_id, this should be sent as parameter.
         """
         job = JobFactory.create(server=self.server)
-        with patch("jenkins.models.Jenkins", spec=True) as mock_jenkins:
+        with mock.patch("jenkins.models.Jenkins", spec=True) as mock_jenkins:
             build_job(job.pk, "20140312.1")
 
         mock_jenkins.assert_called_with(
