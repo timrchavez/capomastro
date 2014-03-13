@@ -116,8 +116,14 @@ class DependencyCreateView(
     fields = ["name", "dependency_type"]
 
 
+class DependencyListView(LoginRequiredMixin, ListView):
+
+    context_object_name = "dependencies"
+    model = Dependency
+
+
 __all__ = [
     "ProjectCreateView", "ProjectListView", "ProjectDetailView", 
     "DependencyCreateView", "InitiateProjectBuildView", "ProjectBuildListView",
-    "ProjectBuildDetailView"
+    "ProjectBuildDetailView", "DependencyListView",
 ]

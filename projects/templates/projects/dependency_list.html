@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+
+{% block page_title %}Wooster - Dependencies{% endblock %}
+{% block page_class %}projects{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <h2>Dependencies</h2>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Job</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dependency in dependencies %}
+        <tr>
+          <td><a href="">{{ dependency.name }}</a></td>
+          <td>{{ dependency.type.name }}</a></td>
+          <td>{{ dependency.description }}</td>
+          <td>{{ dependency.job.name }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p><a href="" class="btn btn-primary" role="button">Create new dependency »</a></p>
+  </div>
+</div>
+{% endblock %}

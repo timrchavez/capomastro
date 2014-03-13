@@ -87,6 +87,9 @@ class ProjectDependency(models.Model):
     auto_track = models.BooleanField(default=True)
     current_build = models.ForeignKey(Build, null=True)
 
+    class Meta:
+        verbose_name_plural = "project dependencies"
+
 
 class Project(models.Model):
 
