@@ -50,29 +50,26 @@ class ImportBuildForJobTest(TestCase):
 
 class CreateJobTest(TestCase):
 
-    pass
+    def test_create_job(self):
+        """
+        Create job should instantiate a job associated with a server and push
+        that job to the server.
+        """
+        jobtype = JobTypeFactory.create()
+        server = JenkinsServerFactory.create()
 
-#    def test_create_job(self):
-#        """
-#        Create job should instantiate a job associated with a server and push
-#        that job to the server.
-#        """
-#        jobtype = JobTypeFactory.create()
-#        server = JenkinsServerFactory.create()
-#
-#        with mock.patch(
-#            "jenkins.helpers.push_job_to_jenkins") as mock_pushtask:
-#                create_job(jobtype, server)
-#
-#        mock_pushtask.assert_called_once_with("kevin")
-#
-#        job = Job.objects.get(jobtype=jobtype, server=server)
-#
-#        with mock.patch("projects.helpers.build_job") as mock_build_job:
-#            new_build = build_project(project)
-#            self.assertIsInstance(new_build, ProjectBuild)
-#
-#        mock_build_job.delay.assert_has_calls(
-#            [mock.call(dependency1.job.pk, new_build.build_id),
-#             mock.call(dependency2.job.pk, new_build.build_id)])
+        with mock.patch(
+            "jenkins.helpers.push_job_to_jenkins") as mock_pushtask:
+                create_job(jobtype, server)
 
+        mock_pushtask.assert_called_once_with("kevin")
+
+        job = Job.objects.get(jobtype=jobtype, server=server)
+
+        with mock.patch("projects.helpers.build_job") as mock_build_job:
+            new_build = build_project(project)
+            self.assertIsInstance(new_build, ProjectBuild)
+
+        mock_build_job.delay.assert_has_calls(
+            [mock.call(dependency1.job.pk, new_build.build_id),
+             mock.call(dependency2.job.pk, new_build.build_id)])
