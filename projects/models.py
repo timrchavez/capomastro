@@ -1,15 +1,10 @@
-from datetime import timedelta
-
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
-from django.template import Template, Context
 from django.utils import timezone
 
-from jenkins.models import Job, Build, Artifact, JobType
-from jenkins.utils import get_notifications_url
-from projects.helpers import DefaultSettings
+from jenkins.models import Job, Build, Artifact
 
 
 class Dependency(models.Model):
@@ -41,7 +36,7 @@ class ProjectDependency(models.Model):
     e.g. Project X can use build 20 of dependency Y while
          Project Z is using build 23.
 
-         So, this is the specific "tag" version of the 
+         So, this is the specific "tag" version of the
          dependency that's used by this project.
 
          We can have a UI that shows what the current version is
@@ -60,7 +55,8 @@ class Project(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(null=True, blank=True)
-    dependencies = models.ManyToManyField(Dependency, through=ProjectDependency)
+    dependencies = models.ManyToManyField(
+        Dependency, through=ProjectDependency)
 
     def get_current_artifacts(self):
         """
@@ -112,12 +108,14 @@ def generate_projectbuild_id(projectbuild):
     """
     # This is a possible race condition
     today = timezone.now()
-    filters = {"requested_at__gt": today.replace(hour=0, minute=0, second=0),
-               "requested_at__lte": today.replace(hour=23, minute=59, second=59),
+
+    day_start = today.replace(hour=0, minute=0, second=0)
+    day_end = today.replace(hour=23, minute=59, second=59)
+    filters = {"requested_at__gt": day_start,
+               "requested_at__lte": day_end,
                "project": projectbuild.project}
     today_count = ProjectBuild.objects.filter(**filters).count()
     return today.strftime("%%Y%%m%%d.%d" % today_count)
-
 
 
 @receiver(post_save, sender=Build, dispatch_uid="new_build_handler")
@@ -125,6 +123,6 @@ def handle_new_build(sender, created, instance, **kwargs):
     if instance.job.dependency_set.exists():
         for dependency in instance.job.dependency_set.all():
             for project_dependency in dependency.projectdependency_set.filter(
-                auto_track=True):
+                    auto_track=True):
                 project_dependency.current_build = instance
                 project_dependency.save()

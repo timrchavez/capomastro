@@ -1,12 +1,14 @@
 from django.test import TestCase
-from django.test.utils import override_settings
+from django.utils import timezone
 
 from httmock import HTTMock
+import mock
 from jenkinsapi.jenkins import Jenkins
 
-from jenkins.models import Build, JobType
-from .factories import BuildFactory, JenkinsServerFactory, JobTypeFactory
+from jenkins.models import Build, JobType, generate_job_name
 from .helpers import mock_url
+from .factories import (
+    BuildFactory, JenkinsServerFactory, JobTypeFactory, JobFactory)
 
 
 class JenkinsServerTest(TestCase):
@@ -37,12 +39,6 @@ class BuildTest(TestCase):
             list(Build.objects.all().values_list("number", flat=True)))
 
 
-template_config = """
-<?xml version='1.0' encoding='UTF-8'?>
-<project><description>{{ dependency.description }}</description>
-</project>"
-"""
-
 class JobTypeTest(TestCase):
 
     def test_instantiation(self):
@@ -50,23 +46,18 @@ class JobTypeTest(TestCase):
         jobtype = JobType.objects.create(
             name="my-test", config_xml="testing xml")
 
-#    def test_generate_config_for_dependency(self):
-#        """
-#        We can use Django templating in the config.xml and this will be
-#        interpreted correctly.
-#        """
-#        jobtype = JobTypeFactory.create(
-#            config_xml=template_config)
-#        dependency = DependencyFactory.create()
-#        job_xml = jobtype.generate_config_for_dependency(dependency)
-#        self.assertIn(dependency.description, job_xml)
-#
-#    @override_settings(NOTIFICATION_HOST="http://example.com")
-#    def test_generate_config_for_dependency_provides_notification_host(self):
-#        """
-#        """
-#        jobtype = JobTypeFactory.create(
-#            config_xml="{{ notification_host }}")
-#        dependency = DependencyFactory.create()
-#        job_xml = jobtype.generate_config_for_dependency(dependency)
-#        self.assertEqual("http://example.com/jenkins/notifications/", job_xml)
+
+class JobTest(TestCase):
+
+    def test_generate_job_name(self):
+        """
+        generate_job_name should generate a name for the job on the server.
+        """
+        job = JobFactory.create()
+        now  = timezone.now()
+
+        with mock.patch("jenkins.models.timezone") as timezone_mock:
+            timezone_mock.now.return_value = now
+            name = generate_job_name(job)
+        expected_job_name = "%s_%d" % (job.name, int(now.toordinal()))
+        self.assertEqual(name, expected_job_name)

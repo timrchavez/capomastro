@@ -16,7 +16,7 @@ class ProjectForm(forms.ModelForm):
         project = super(ProjectForm, self).save(commit=False)
         project.save()
         for dependency in self.cleaned_data["dependencies"]:
-            project_dependency = ProjectDependency.objects.create(
+            ProjectDependency.objects.create(
                 project=project, dependency=dependency,
                 auto_track=self.data.get("auto_track", False),
                 current_build=dependency.get_current_build())
@@ -25,11 +25,16 @@ class ProjectForm(forms.ModelForm):
 
 class DependencyForm(forms.ModelForm):
 
-    jobtype = forms.ModelChoiceField(
-        queryset=JobType.objects, required=True)
+    job_type = forms.ModelChoiceField(
+        queryset=JobType.objects, required=True,
+        help_text="Select a job type to use.")
     server = forms.ModelChoiceField(
         queryset=JenkinsServer.objects, required=True)
 
     class Meta:
         model = Dependency
         exclude = ["job"]
+
+    def save(self, commit=True):
+        dependency = super(DependencyForm, self).save(commit=commit)
+        return dependency

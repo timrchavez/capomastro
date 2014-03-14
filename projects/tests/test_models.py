@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 from projects.models import (
-    Project, Dependency, ProjectDependency, ProjectBuild,
+    Dependency, ProjectDependency, ProjectBuild,
     generate_projectbuild_id)
 from .factories import (
     ProjectFactory, DependencyFactory, ProjectBuildFactory)
@@ -15,7 +15,7 @@ class DependencyTest(TestCase):
     def test_instantiation(self):
         """We can create Dependencies."""
         job = JobFactory.create()
-        dependency = Dependency.objects.create(
+        Dependency.objects.create(
             name="My Dependency", job=job)
 
     def test_get_current_build(self):
@@ -73,8 +73,8 @@ class ProjectDependencyTest(TestCase):
     def test_new_build_with_no_auto_track_build(self):
         """
         If we create a new build for a dependency of a Project, and the
-        ProjectDependency is not set to auto_track then the current_build should
-        not be updated.
+        ProjectDependency is not set to auto_track then the current_build
+        should not be updated.
         """
         build1 = BuildFactory.create()
         dependency = DependencyFactory.create(job=build1.job)
@@ -85,7 +85,7 @@ class ProjectDependencyTest(TestCase):
         project_dependency.current_build = build1
         project_dependency.save()
 
-        build2 = BuildFactory.create(job=build1.job)
+        BuildFactory.create(job=build1.job)
         # Reload the project dependency
         project_dependency = ProjectDependency.objects.get(
             pk=project_dependency.pk)
@@ -107,7 +107,7 @@ class ProjectTest(TestCase):
         build1 = BuildFactory.create(job=job)
         build2 = BuildFactory.create(job=job)
 
-        artifact1 = ArtifactFactory.create(build=build1)
+        ArtifactFactory.create(build=build1)
         artifact2 = ArtifactFactory.create(build=build2)
 
         self.assertEqual([artifact2], list(project.get_current_artifacts()))

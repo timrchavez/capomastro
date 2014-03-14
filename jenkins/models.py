@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 from jenkinsapi.jenkins import Jenkins
 
@@ -34,20 +35,15 @@ class JobType(models.Model):
     def __str__(self):
         return self.name
 
-    def generate_config_for_dependency(self, dependency):
-        """
-        Parse the config XML as a Django template, replacing {{}} holders etc
-        as appropriate.
-        """
-        context = get_context_for_template(dependency)
-        return Template(self.config_xml).render(context)
-
 
 class Job(models.Model):
 
     server = models.ForeignKey(JenkinsServer)
     jobtype = models.ForeignKey(JobType)
-    name = models.CharField(max_length=255, blank=True)
+    name = models.CharField(max_length=255)
+
+    class Meta:
+        unique_together = "server", "name"
 
     def __str__(self):
         return self.name
@@ -77,14 +73,8 @@ class Artifact(models.Model):
     url = models.CharField(max_length=255)
 
 
-def get_context_for_template(dependency):
+def generate_job_name(job):
     """
-    Returns a Context for the Job XML templating.
+    Generates a "unique" id.
     """
-    settings = DefaultSettings({"NOTIFICATION_HOST": "http://localhost"})
-    notifications_url = get_notifications_url(settings.NOTIFICATION_HOST)
-    context_vars = {
-        "notification_host": get_notifications_url(settings.NOTIFICATION_HOST),
-        "dependency": dependency,
-    }
-    return Context(context_vars)
+    return "%s_%d" % (job.name, int(timezone.now().toordinal()))

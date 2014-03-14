@@ -1,13 +1,14 @@
 import logging
 
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 
 import mock
 import jenkinsapi.job
 
-from jenkins.helpers import import_build_for_job
-from jenkins.models import Build
-from .factories import JobFactory, BuildFactory
+from jenkins.helpers import import_build_for_job, create_job
+from jenkins.models import Build, Job
+from .factories import (
+    JobFactory, BuildFactory, JobTypeFactory, JenkinsServerFactory)
 
 
 class ImportBuildForJobTest(TestCase):
@@ -38,10 +39,40 @@ class ImportBuildForJobTest(TestCase):
             job.server.url, username=u"root", password=u"testing")
 
         mock_logging.assert_has_calls(
-            [mock.call.info("Located job testjob%d\n" % job.pk),
-             mock.call.info("Using server at http://www%d.example.com/\n" % job.server.pk),
+            [mock.call.info("Located job %s\n" % job),
+             mock.call.info("Using server at %s\n" % job.server.url),
              mock.call.info("{'status': 'SUCCESS', 'duration': 1000, 'url': 'http://localhost/123'}")])
 
         build = Build.objects.get(pk=build.pk)
         self.assertEqual(1000, build.duration)
         self.assertEqual("SUCCESS", build.status)
+
+
+class CreateJobTest(TestCase):
+
+    pass
+
+#    def test_create_job(self):
+#        """
+#        Create job should instantiate a job associated with a server and push
+#        that job to the server.
+#        """
+#        jobtype = JobTypeFactory.create()
+#        server = JenkinsServerFactory.create()
+#
+#        with mock.patch(
+#            "jenkins.helpers.push_job_to_jenkins") as mock_pushtask:
+#                create_job(jobtype, server)
+#
+#        mock_pushtask.assert_called_once_with("kevin")
+#
+#        job = Job.objects.get(jobtype=jobtype, server=server)
+#
+#        with mock.patch("projects.helpers.build_job") as mock_build_job:
+#            new_build = build_project(project)
+#            self.assertIsInstance(new_build, ProjectBuild)
+#
+#        mock_build_job.delay.assert_has_calls(
+#            [mock.call(dependency1.job.pk, new_build.build_id),
+#             mock.call(dependency2.job.pk, new_build.build_id)])
+
