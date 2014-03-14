@@ -3,8 +3,8 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 from projects.models import (
-    Dependency, ProjectDependency, ProjectBuild,
-    generate_projectbuild_id)
+    Dependency, ProjectDependency, ProjectBuild, generate_projectbuild_id,
+    ProjectBuildDependency)
 from .factories import (
     ProjectFactory, DependencyFactory, ProjectBuildFactory)
 from jenkins.tests.factories import JobFactory, BuildFactory, ArtifactFactory
@@ -152,3 +152,33 @@ class ProjectBuildTest(TestCase):
         projectbuild = ProjectBuildFactory.create()
         expected_build_id = timezone.now().strftime("%Y%m%d.0")
         self.assertEqual(expected_build_id, projectbuild.build_id)
+
+    def test_project_build_updates_when_build_created(self):
+        """
+        If we have a ProjectBuild with a dependency, which is associated with a
+        job, and we get a build from that job, then if the build_id is correct,
+        we should associate the build dependency with that build.
+        """
+        project = ProjectFactory.create()
+        dependency1 = DependencyFactory.create()
+        ProjectDependency.objects.create(
+            project=project, dependency=dependency1)
+
+        dependency2 = DependencyFactory.create()
+        ProjectDependency.objects.create(
+            project=project, dependency=dependency2)
+
+        from projects.helpers import build_project
+        project_build = build_project(project)
+
+        build1 = BuildFactory.create(
+            job=dependency1.job, build_id=project_build.build_id)
+
+        build_dependencies = ProjectBuildDependency.objects.filter(
+            projectbuild=project_build)
+        self.assertEqual(2, build_dependencies.count())
+        dependency = build_dependencies.get(job=dependency1.job)
+        self.assertEqual(build1, dependency.build)
+
+        dependency = build_dependencies.get(job=dependency2.job)
+        self.assertIsNone(dependency.build)

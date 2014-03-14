@@ -1,7 +1,7 @@
 from jenkins.tasks import build_job
 
 
-def build_project(project, user=None):
+def build_project(project, user=None, queue_build=True):
     """
     Given a build, schedule building each of its dependencies.
     """
@@ -13,5 +13,6 @@ def build_project(project, user=None):
         ProjectBuildDependency.objects.create(
             projectbuild=build,
             job=dependency.job)
-        build_job.delay(dependency.job.pk, build.build_id)
+        if queue_build:
+            build_job.delay(dependency.job.pk, build.build_id)
     return build

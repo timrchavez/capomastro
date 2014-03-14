@@ -141,3 +141,13 @@ def handle_new_build(sender, created, instance, **kwargs):
                     auto_track=True):
                 project_dependency.current_build = instance
                 project_dependency.save()
+
+
+@receiver(post_save, sender=Build, dispatch_uid="projectbuild_build_handler")
+def handle_builds_for_projectbuild(sender, created, instance, **kwargs):
+    if instance.build_id:
+        dependency = ProjectBuildDependency.objects.filter(
+            job=instance.job, projectbuild__build_id=instance.build_id).first()
+        if dependency:
+            dependency.build = instance
+            dependency.save()

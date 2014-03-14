@@ -7,7 +7,7 @@ from jenkins.models import Build, Job, JenkinsServer, Artifact, JobType
 class JenkinsServerFactory(factory.DjangoModelFactory):
     FACTORY_FOR = JenkinsServer
 
-    name = factory.Sequence(lambda n: "Server %s" % n)
+    name = factory.Sequence(lambda n: "Server %d" % n)
     url = factory.Sequence(lambda n: "http://www%d.example.com/" % n)
     username = "root"
     password = "testing"
@@ -27,6 +27,7 @@ class JobFactory(factory.DjangoModelFactory):
 
     server = factory.SubFactory(JenkinsServerFactory)
     jobtype = factory.SubFactory(JobTypeFactory)
+    name = factory.Sequence(lambda n: "job_%d" % n)
 
 
 class BuildFactory(factory.DjangoModelFactory):
