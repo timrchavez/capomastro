@@ -22,7 +22,7 @@
         <tr>
           <td>{{ dependency.name }}</td>
           <td><a href="{% url 'dependencytype_detail' pk=dependency.dependency_type.pk %}">{{ dependency.dependency_type.name }}</a></td>
-          <td>{{ dependency.description }}</td>
+          <td>{{ dependency.description|default:"No description" }}</td>
           <td>{{ dependency.job.name }}</td>
         </tr>
         {% endfor %}
