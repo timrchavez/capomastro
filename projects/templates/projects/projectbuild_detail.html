@@ -1,18 +1,19 @@
 {% extends "base.html" %}
 {% load bootstrap3 %}
+{% load wooster_bootstrap %}
 
-{% block page_title %}{{ project.name }}{% endblock %}
+{% block page_title %}Project Build {{ projectbuild.build_id }}{% endblock %}
 {% block page_class %}project{% endblock %}
 
 {% block content %}
 <div class="container">
   <div class="row">
     <div>
-      <h2>{{ project_build.build_id }}</h2>
+      <h2>{{ projectbuild.build_id }}</h2>
     </div>
   </div>
   <div class="row">
-    <h3>Builds</h3>
+    <h3>Dependencies</h3>
     <table class="table table-striped">
       <thead>
         <tr>
@@ -23,7 +24,7 @@
       </thead>
       <tbody>
         {% for build in builds %}
-        <tr>
+        <tr class="{{ build.status|build_status_to_class }}">
           <td>{{ build.number }}</td>
           <td>{{ build.status }}</td>
           <td>{{ build.phase }}</td>
@@ -33,7 +34,7 @@
     </table>
   </div>
   <div class="row">
-    <h3>Current artifacts</h3>
+    <h3>Build artifacts</h3>
     <table class="table table-striped">
       <thead>
         <tr>
@@ -43,7 +44,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for artifact in project_build.get_current_artifacts %}
+        {% for artifact in projectbuild.get_current_artifacts %}
         <tr>
           <td>{{ artifact.build }}</td>
           <td>{{ artifact.filename }}</td>

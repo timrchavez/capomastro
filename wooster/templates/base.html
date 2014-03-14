@@ -1,6 +1,6 @@
 {% load staticfiles %}
 {% load bootstrap3 %}
-{% load active_url from bootstrap_active %}
+{% load wooster_bootstrap %}
 
 <!doctype html>
 <!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
@@ -58,18 +58,10 @@
           <a class="navbar-brand" href="#">Wooster</a>
         </div>
         <div class="navbar-collapse collapse">
-          <form class="navbar-form navbar-right">
-            <div class="form-group">
-              <input type="text" placeholder="Email" class="form-control">
-            </div>
-            <div class="form-group">
-              <input type="password" placeholder="Password" class="form-control">
-            </div>
-            <button type="submit" class="btn btn-success">Sign in</button>
-          </form>
           <ul class="nav navbar-nav navbar-right">
-            <li class="{% active_url 'projects_index' %}"><a href="{% url 'projects_index' %}">Projects</a></li>
-            <li class="{% active_url 'jenkinsserver_index' %}"><a href="{% url 'jenkinsserver_index' %}">Jenkins Servers</a></li>
+            <li class="{% active_url 'project_list' %}"><a href="{% url 'project_list' %}">Projects</a></li>
+            <li class="{% active_url 'dependency_list' %}"><a href="{% url 'dependency_list' %}">Dependencies</a></li>
+            <li class="{% active_url 'jenkinsserver_list' %}"><a href="{% url 'jenkinsserver_list' %}">Jenkins Servers</a></li>
             {% if request.user.is_superuser %}
             <li><a href="{% url 'admin:index' %}">Admin</a></li>
             {% endif %}

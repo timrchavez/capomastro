@@ -19,7 +19,6 @@ def build_job(job_pk, build_id=None):
     """
     # TODO: If a job is already queued, then this can throw
     # WillNotBuild: <jenkinsapi.job.Job job> is already queued
-    # Should we check for it being queued? with is_queued_or_running?
     job = Job.objects.get(pk=job_pk)
     client = job.server.get_client()
     params = {}

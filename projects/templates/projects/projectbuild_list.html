@@ -7,17 +7,25 @@
 {% block content %}
 <div class="container">
   <div class="row">
-    <h2>Projects</h2>
+    <h2>Project Builds for {{ project.name }}</h2>
     <table class="table table-striped">
       <thead>
         <tr>
           <th>Build Id</th>
+          <th>Requested by</th>
+          <th>Requested at</th>
+          <th>Ended at</th>
+          <th>Status</th>
         </tr>
       </thead>
       <tbody>
-        {% for build in project_builds %}
+        {% for build in projectbuilds %}
         <tr>
-          <td><a href="{% url 'projects_project_build_detail' project_pk=project.pk build_pk=build.pk %}">{{ build.build_id }}</a></td>
+          <td><a href="{% url 'project_projectbuild_detail' project_pk=project.pk build_pk=build.pk %}">{{ build.build_id }}</a></td>
+          <td>{{ build.requested_by }}</td>
+          <td>{{ build.requested_at|time:"jS F Y H:i" }}</td>
+          <td>TODO</td>
+          <td>{{ build.status }}</td>
         </tr>
         {% endfor %}
       </tbody>

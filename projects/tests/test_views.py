@@ -8,7 +8,9 @@ from django_webtest import WebTest
 import mock
 
 from projects.models import ProjectDependency, Project, ProjectBuild
-from .factories import ProjectFactory, DependencyFactory
+from .factories import (
+    ProjectFactory, DependencyFactory, ProjectBuildFactory,
+    DependencyTypeFactory)
 from jenkins.tests.factories import BuildFactory, JobFactory
 
 # TODO Introduce subclass of WebTest that allows easy assertions that a page
@@ -36,7 +38,7 @@ class ProjectDetailTest(WebTest):
         # TODO: Work out how to configure DjangoFactory to setup m2m through
         dependency = ProjectDependency.objects.create(
             project=project, dependency=DependencyFactory.create())
-        project_url = reverse("projects_detail", kwargs={"pk": project.pk})
+        project_url = reverse("project_detail", kwargs={"pk": project.pk})
         response = self.app.get(project_url, user="testing")
 
         self.assertEqual(200, response.status_code)
@@ -62,7 +64,7 @@ class ProjectCreateTest(WebTest):
         """
         We can create projects with a set of dependencies.
         """
-        project_url = reverse("projects_create")
+        project_url = reverse("project_create")
         response = self.app.get(project_url, user="testing")
         form = response.forms["create-project"]
         form["dependencies"].select_multiple(
@@ -72,17 +74,51 @@ class ProjectCreateTest(WebTest):
         response = form.submit()
 
         project = Project.objects.get(name="My Project")
-        # TODO: Check that the dependencies are not auto-tracked.
+        dependencies = ProjectDependency.objects.filter(project=project)
+
+        self.assertEqual(
+            [False, False],
+            list(dependencies.values_list("auto_track", flat=True)))
+        self.assertEqual(
+            set([self.dependency1.name, self.dependency2.name]),
+            set(dependencies.values_list("dependency__name", flat=True)))
 
     def test_create_project_with_auto_track(self):
         """
         We can set the auto_track on dependencies of the project.
         """
+        project_url = reverse("project_create")
+        response = self.app.get(project_url, user="testing")
+        form = response.forms["create-project"]
+        form["dependencies"].select_multiple(
+            [self.dependency1.pk, self.dependency2.pk])
+        form["name"].value = "My Project"
+        form["auto_track"].value = True
+
+        response = form.submit()
+
+        project = Project.objects.get(name="My Project")
+        dependencies = ProjectDependency.objects.filter(project=project)
+
+        self.assertEqual(
+            [True, True],
+            list(dependencies.values_list("auto_track", flat=True)))
 
     def test_create_project_non_unique_name(self):
         """
         The project name should be unique.
         """
+        project = ProjectFactory.create(name="My Project")
+
+        project_url = reverse("project_create")
+        response = self.app.get(project_url, user="testing")
+        form = response.forms["create-project"]
+        form["dependencies"].select_multiple(
+            [self.dependency1.pk])
+        form["name"].value = "My Project"
+
+        response = form.submit()
+        self.assertContains(response, "Project with this Name already exists.")
 
 
 class ProjectBuildViewTest(WebTest):
@@ -103,19 +139,22 @@ class ProjectBuildViewTest(WebTest):
         project = ProjectFactory.create()
         dependency = ProjectDependency.objects.create(
             project=project, dependency=DependencyFactory.create())
-        project_url = reverse("projects_detail", kwargs={"pk": project.pk})
+        project_url = reverse("project_detail", kwargs={"pk": project.pk})
 
-        project_build = mock.MagicMock(autospec=ProjectBuild)
-        project_build.build_id = "20140312.1"
+        projectbuild = ProjectBuildFactory.create(project=project)
         with mock.patch("projects.views.build_project") as mock_build_project:
-            mock_build_project.return_value = project_build
+            mock_build_project.return_value = projectbuild
             response = self.app.get(project_url, user="testing")
             response = response.forms["build-project"].submit().follow()
 
-        mock_build_project.assert_called_once_with(project)
+        mock_build_project.assert_called_once_with(project, user=self.user)
         self.assertEqual(200, response.status_code)
+
+        self.assertEqual(
+            "Project Build %s" % projectbuild.build_id,
+            response.html.title.text)
         self.assertContains(
-            response, "Build '20140312.1' Queued.")
+            response, "Build '%s' Queued." % projectbuild.build_id)
 
 
 class ProjectBuildListViewTest(WebTest):
@@ -129,7 +168,7 @@ class ProjectBuildListViewTest(WebTest):
         # TODO: We should assert that requests without a logged in user
         # get redirected to login.
 
-    def test_project_build_list_view(self):
+    def test_projectbuild_list_view(self):
         """
         The detail view should render the server and jobs for the server.
         """
@@ -140,13 +179,76 @@ class ProjectBuildListViewTest(WebTest):
 
         dependency = ProjectDependency.objects.create(
             project=project, dependency=DependencyFactory.create(job=job))
-        project_build = ProjectBuild.objects.create(project=project)
-        builds = BuildFactory.create(job=job, build_id=project_build.build_id)
+        projectbuild = ProjectBuildFactory.create(project=project)
+        builds = BuildFactory.create(job=job, build_id=projectbuild.build_id)
 
-        url = reverse("projects_project_build_list", kwargs={"pk": project.pk})
+        url = reverse("project_projectbuild_list", kwargs={"pk": project.pk})
         response = self.app.get(url, user="testing")
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(
-            set([project_build]), set(response.context["project_builds"]))
+            set([projectbuild]), set(response.context["projectbuilds"]))
         self.assertEqual(project, response.context["project"])
+
+
+
+class DependencyListViewTest(WebTest):
+
+    def setUp(self):
+        self.user = User.objects.create_user("testing")
+
+    def test_page_requires_authenticated_user(self):
+        """
+        """
+        # TODO: We should assert that requests without a logged in user
+        # get redirected to login.
+
+    def test_dependency_list_view(self):
+        """
+        The Dependency List should render a list of dependencies with links to
+        their type detail views.
+        """
+        dependencies = DependencyFactory.create_batch(5)
+        url = reverse("dependency_list")
+        response = self.app.get(url, user="testing")
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(
+            set(dependencies), set(response.context["dependencies"]))
+
+        response = response.click(dependencies[0].dependency_type.name)
+        self.assertEqual(
+             dependencies[0].dependency_type.name, response.html.title.text)
+
+
+class DependencyTypeDetailTest(WebTest):
+
+    def setUp(self):
+        self.user = User.objects.create_user("testing")
+
+    def test_page_requires_authenticated_user(self):
+        """
+        """
+        # TODO: We should assert that requests without a logged in user
+        # get redirected to login.
+
+    def test_dependency_type_detail(self):
+        """
+        The detail view should render the dependency type name, description and
+        the job xml.
+        """
+        dependencytype = DependencyTypeFactory.create(
+            config_xml="this is the job xml")
+        dependencytype_url = reverse(
+            "dependencytype_detail", kwargs={"pk": dependencytype.pk})
+        response = self.app.get(dependencytype_url, user="testing")
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(
+            dependencytype, response.context["dependencytype"])
+
+        self.assertContains(
+            response, "<code>this is the job xml</code>", html=True)
+        self.assertContains(response, dependencytype.name)
+        self.assertContains(response, dependencytype.description)
+

@@ -4,11 +4,13 @@ from projects.views import *
 
 
 urlpatterns = patterns("",
-    url(r"^projects/$", ProjectListView.as_view(), name="projects_index"),
-    url(r"^projects/(?P<pk>\d+)/$", ProjectDetailView.as_view(), name="projects_detail"),
-    url(r"^projects/(?P<pk>\d+)/build/$", InitiateProjectBuildView.as_view(), name="projects_initiate_project_build"),
-    url(r"^projects/(?P<pk>\d+)/builds/$", ProjectBuildListView.as_view(), name="projects_project_build_list"),
-    url(r"^projects/(?P<project_pk>\d+)/builds/(?P<build_pk>\d+)$", ProjectBuildDetailView.as_view(), name="projects_project_build_detail"),
-    url(r"^projects/create/$", ProjectCreateView.as_view(), name="projects_create"),
+    url(r"^projects/$", ProjectListView.as_view(), name="project_list"),
+    url(r"^projects/(?P<pk>\d+)/$", ProjectDetailView.as_view(), name="project_detail"),
+    url(r"^projects/(?P<pk>\d+)/build/$", InitiateProjectBuildView.as_view(), name="project_initiate_projectbuild"),
+    url(r"^projects/(?P<pk>\d+)/builds/$", ProjectBuildListView.as_view(), name="project_projectbuild_list"),
+    url(r"^projects/(?P<project_pk>\d+)/builds/(?P<build_pk>\d+)$", ProjectBuildDetailView.as_view(), name="project_projectbuild_detail"),
+    url(r"^projects/create/$", ProjectCreateView.as_view(), name="project_create"),
     url(r"^dependencies/create/$", DependencyCreateView.as_view(), name="dependency_create"),
+    url(r"^dependencies/$", DependencyListView.as_view(), name="dependency_list"),
+    url(r"^dependencytypes/(?P<pk>\d+)/$", DependencyTypeDetailView.as_view(), name="dependencytype_detail"),
 )

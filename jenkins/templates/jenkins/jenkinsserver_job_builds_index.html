@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% load bootstrap3 %}
+{% load wooster_bootstrap %}
+{% load jenkins_tags %}
 
 {% block page_title %}{{ server.name }} | {{ job.name }}{% endblock %}
 {% block page_class %}jenkinsserver{% endblock %}
@@ -25,11 +27,12 @@
       </thead>
       <tbody>
         {% for build in builds %}
-        <tr>
+        <tr class="{{ build.status|build_status_to_class }}">
           <td>{{ build.number }}</a></td>
           <td>{{ build.build_id }}</a></td>
+          <td>{{ build.duration|build_time_to_timedelta }}</a></td>
           <td>{{ build.url }}</a></td>
-          <td>{{ build.result }}</a></td>
+          <td>{{ build.status }}</a></td>
         </tr>
         {% endfor %}
       </tbody>

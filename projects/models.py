@@ -8,14 +8,8 @@ from django.template import Template, Context
 from django.utils import timezone
 
 from jenkins.models import Job, Build, Artifact
+from jenkins.utils import get_notifications_url
 from projects.helpers import DefaultSettings
-
-
-def get_notifications_url(host):
-    """
-    Returns the full URL for notifications given a base.
-    """
-    # TODO: This should probably move to the Jenkins app.
 
 
 def get_context_for_template(dependency):
@@ -23,8 +17,9 @@ def get_context_for_template(dependency):
     Returns a Context for the Job XML templating.
     """
     settings = DefaultSettings({"NOTIFICATION_HOST": "http://localhost"})
+    notifications_url = get_notifications_url(settings.NOTIFICATION_HOST)
     context_vars = {
-        "notification_host": settings.get_value_or_none("NOTIFICATION_HOST"),
+        "notification_host": get_notifications_url(settings.NOTIFICATION_HOST),
         "dependency": dependency,
     }
     return Context(context_vars)
@@ -92,10 +87,13 @@ class ProjectDependency(models.Model):
     auto_track = models.BooleanField(default=True)
     current_build = models.ForeignKey(Build, null=True)
 
+    class Meta:
+        verbose_name_plural = "project dependencies"
+
 
 class Project(models.Model):
 
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     description = models.TextField(null=True, blank=True)
     dependencies = models.ManyToManyField(Dependency, through=ProjectDependency)
 
@@ -137,28 +135,24 @@ class ProjectBuild(models.Model):
 
     def save(self, **kwargs):
         if not self.pk:
-            self.build_id = generate_project_build_id(self)
+            self.build_id = generate_projectbuild_id(self)
         super(ProjectBuild, self).save(**kwargs)
 
 
-def generate_project_build_id(project_build):
+def generate_projectbuild_id(projectbuild):
     """
     Generates a daily-unique id for a given project.
 
-    # TODO: Should this drop the ".0" when there's no previous builds?
+    TODO: Should this drop the ".0" when there's no previous builds?
     """
     # This is a possible race condition
     today = timezone.now()
     filters = {"requested_at__gt": today.replace(hour=0, minute=0, second=0),
                "requested_at__lte": today.replace(hour=23, minute=59, second=59),
-               "project": project_build.project}
+               "project": projectbuild.project}
     today_count = ProjectBuild.objects.filter(**filters).count()
     return today.strftime("%%Y%%m%%d.%d" % today_count)
 
-
-class ProjectBuildDependency(models.Model):
-    """
-    """
 
 
 @receiver(post_save, sender=Build, dispatch_uid="new_build_handler")
