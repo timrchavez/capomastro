@@ -14,10 +14,19 @@ class JenkinsServerFactory(factory.DjangoModelFactory):
     remote_addr = "192.168.50.201"
 
 
+class JobTypeFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = JobType
+
+    name = factory.Sequence(lambda n: "type%d" % n)
+    description = "This is a dependency type."
+    config_xml = "<?xml version='1.0' encoding='UTF-8'?><project></project>"
+
+
 class JobFactory(factory.DjangoModelFactory):
     FACTORY_FOR = Job
 
     server = factory.SubFactory(JenkinsServerFactory)
+    jobtype = factory.SubFactory(JobTypeFactory)
     name = factory.Sequence(lambda n: "testjob%d" % n)
 
 
@@ -39,11 +48,3 @@ class ArtifactFactory(factory.DjangoModelFactory):
     build = factory.SubFactory(BuildFactory)
     filename = factory.fuzzy.FuzzyText(length=255)
     url = factory.Sequence(lambda n: "http://example.com/file/%d" % n)
-
-
-class JobTypeFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = JobType
-
-    name = factory.Sequence(lambda n: "type%d" % n)
-    description = "This is a dependency type."
-    config_xml = "<?xml version='1.0' encoding='UTF-8'?><project></project>"

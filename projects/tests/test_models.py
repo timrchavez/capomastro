@@ -14,10 +14,9 @@ class DependencyTest(TestCase):
 
     def test_instantiation(self):
         """We can create Dependencies."""
-        dependency_type = DependencyType.objects.create(
-            name="my-test", config_xml="testing xml")
+        job = JobFactory.create()
         dependency = Dependency.objects.create(
-            name="My Dependency", dependency_type=dependency_type)
+            name="My Dependency", job=job)
 
     def test_get_current_build(self):
         """

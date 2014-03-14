@@ -10,7 +10,8 @@ import mock
 from projects.models import ProjectDependency, Project, ProjectBuild
 from .factories import (
     ProjectFactory, DependencyFactory, ProjectBuildFactory)
-from jenkins.tests.factories import BuildFactory, JobFactory
+from jenkins.tests.factories import (
+    BuildFactory, JobFactory, JobTypeFactory, JenkinsServerFactory)
 
 # TODO Introduce subclass of WebTest that allows easy assertions that a page
 # requires various permissions...
@@ -215,9 +216,9 @@ class DependencyListViewTest(WebTest):
         self.assertEqual(
             set(dependencies), set(response.context["dependencies"]))
 
-        response = response.click(dependencies[0].dependency_type.name)
+        response = response.click(dependencies[0].job.jobtype.name)
         self.assertEqual(
-             dependencies[0].dependency_type.name, response.html.title.text)
+             dependencies[0].job.jobtype.name, response.html.title.text)
 
 
 class DependencyCreateTest(WebTest):
@@ -225,8 +226,9 @@ class DependencyCreateTest(WebTest):
     def setUp(self):
         self.user = User.objects.create_superuser(
             "testing", "testing@example.com", "password")
-        self.dependencytype = DependencyTypeFactory.create(
+        self.jobtype = JobTypeFactory.create(
             config_xml="this is the job xml")
+        self.server = JenkinsServerFactory.create()
 
     def test_page_requires_permission(self):
         """
@@ -242,7 +244,8 @@ class DependencyCreateTest(WebTest):
         response = self.app.get(project_url, user="testing")
 
         form = response.forms["dependency-form"]
-        form["dependency_type"].select(self.dependencytype.pk)
+        form["jobtype"].select(self.jobtype.pk)
+        form["server"].select(self.server.pk)
         form["name"].value = "My Dependency"
 
         response = form.submit().follow()

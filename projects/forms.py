@@ -1,6 +1,6 @@
 from django import forms
 
-from jenkins.models import JenkinsServer
+from jenkins.models import JenkinsServer, JobType
 from projects.models import Project, Dependency, ProjectDependency
 
 
@@ -25,6 +25,8 @@ class ProjectForm(forms.ModelForm):
 
 class DependencyForm(forms.ModelForm):
 
+    jobtype = forms.ModelChoiceField(
+        queryset=JobType.objects, required=True)
     server = forms.ModelChoiceField(
         queryset=JenkinsServer.objects, required=True)
 
