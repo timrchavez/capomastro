@@ -15,6 +15,9 @@ class ProjectForm(forms.ModelForm):
     def save(self, commit=True):
         project = super(ProjectForm, self).save(commit=False)
         project.save()
+
+        # TODO: This probably shouldn't use the get_current_build if
+        # auto_track=False
         for dependency in self.cleaned_data["dependencies"]:
             ProjectDependency.objects.create(
                 project=project, dependency=dependency,

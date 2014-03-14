@@ -73,6 +73,18 @@ class Project(models.Model):
         return self.name
 
 
+class ProjectBuildDependency(models.Model):
+    """
+    Represents one of the dependencies of a particular Projet Build.
+    """
+    projectbuild = models.ForeignKey("ProjectBuild")
+    build = models.ForeignKey(Build, blank=True, null=True)
+    job = models.ForeignKey(Job)
+
+    class Meta:
+        verbose_name_plural = "project build dependencies"
+
+
 class ProjectBuild(models.Model):
     """Represents a requested build of a Project."""
 
@@ -82,6 +94,9 @@ class ProjectBuild(models.Model):
     ended_at = models.DateTimeField(null=True)
     status = models.CharField(max_length=10, default="INCOMPLETE")
     build_id = models.CharField(max_length=20)
+
+    build_dependencies = models.ManyToManyField(
+        Build, through=ProjectBuildDependency)
 
     def __str__(self):
         return self.project.name
