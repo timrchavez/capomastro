@@ -3,6 +3,7 @@ import logging
 from django.conf import settings
 
 from jenkins.models import Job, Build, Artifact
+from jenkins.utils import generate_job_name
 
 
 def import_build_for_job(job_pk, build_number):
@@ -43,7 +44,9 @@ def create_job(jobtype, server):
     """
     Create a job in the given Jenkins Server.
     """
-    return Job.objects.create(jobtype=jobtype, server=server)
+    name = generate_job_name(jobtype)
+    job = Job.objects.create(jobtype=jobtype, server=server, name=name)
+    return job
 
 
 def import_builds_for_job(job_pk):

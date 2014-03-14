@@ -1,11 +1,9 @@
 from django.test import TestCase
-from django.utils import timezone
 
 from httmock import HTTMock
-import mock
 from jenkinsapi.jenkins import Jenkins
 
-from jenkins.models import Build, JobType, generate_job_name
+from jenkins.models import Build, JobType
 from .helpers import mock_url
 from .factories import (
     BuildFactory, JenkinsServerFactory, JobTypeFactory, JobFactory)
@@ -45,19 +43,3 @@ class JobTypeTest(TestCase):
         """We can create JobTypes."""
         jobtype = JobType.objects.create(
             name="my-test", config_xml="testing xml")
-
-
-class JobTest(TestCase):
-
-    def test_generate_job_name(self):
-        """
-        generate_job_name should generate a name for the job on the server.
-        """
-        job = JobFactory.create()
-        now  = timezone.now()
-
-        with mock.patch("jenkins.models.timezone") as timezone_mock:
-            timezone_mock.now.return_value = now
-            name = generate_job_name(job)
-        expected_job_name = "%s_%d" % (job.name, int(now.toordinal()))
-        self.assertEqual(name, expected_job_name)

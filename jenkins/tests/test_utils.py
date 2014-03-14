@@ -1,9 +1,12 @@
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
+from django.utils import timezone
 from django.test.utils import override_settings
+
+import mock
 
 from jenkins.utils import (
     get_notifications_url, DefaultSettings, get_job_xml_for_upload,
-    get_context_for_template)
+    get_context_for_template, generate_job_name)
 from .factories import JobFactory, JobTypeFactory
 
 
@@ -99,7 +102,7 @@ template_config = """
 """
 
 
-class GetTemplatedJobTest(SimpleTestCase):
+class GetTemplatedJobTest(TestCase):
 
     @override_settings(NOTIFICATION_HOST="http://example.com")
     def test_get_job_xml_for_upload(self):
@@ -113,3 +116,20 @@ class GetTemplatedJobTest(SimpleTestCase):
         expected_url = get_notifications_url("http://example.com/")
         self.assertIn(job.jobtype.description, xml_for_upload)
         self.assertIn(expected_url, xml_for_upload)
+
+
+class GenerateNameJobTest(TestCase):
+
+    def test_generate_job_name(self):
+        """
+        generate_job_name should generate a name for the job on the server when
+        given a jobtype.
+        """
+        job = JobFactory.create()
+        now  = timezone.now()
+
+        with mock.patch("jenkins.utils.timezone") as timezone_mock:
+            timezone_mock.now.return_value = now
+            name = generate_job_name(job)
+        expected_job_name = "%s_%d" % (job.name, int(now.toordinal()))
+        self.assertEqual(name, expected_job_name)

@@ -1,8 +1,9 @@
 from celery.utils.log import get_task_logger
 from celery import shared_task
 
-from jenkins.helpers import import_build_for_job
+from jenkins.helpers import import_build_for_job, create_job
 from jenkins.models import Job, JobType, JenkinsServer
+from jenkins.utils import get_job_xml_for_upload
 
 logger = get_task_logger(__name__)
 
@@ -33,5 +34,6 @@ def push_job_to_jenkins(job_pk):
     Create a job in the server with the config.
     """
     job = Job.objects.get(pk=job_pk)
+    xml = get_job_xml_for_upload(job)
     client = job.server.get_client()
-    client.create_job(job.name, job.jobtype.config_xml)
+    client.create_job(job.name, xml)

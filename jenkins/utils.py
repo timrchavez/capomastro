@@ -1,5 +1,6 @@
 from django.template import Template, Context
 from django.conf import settings
+from django.utils import timezone
 
 from urlparse import urljoin
 
@@ -60,3 +61,10 @@ class DefaultSettings(object):
         Doesn't raise an AttributeError in the event that the key doesn't exist.
         """
         return getattr(settings, key, getattr(self.defaults, key, None))
+
+
+def generate_job_name(job):
+    """
+    Generates a "unique" id.
+    """
+    return "%s_%d" % (job.name, int(timezone.now().toordinal()))

@@ -66,11 +66,14 @@ class CreateJobTaskTest(TestCase):
         create the job with the right name and content.
         """
         jobtype = JobTypeFactory.create(config_xml=job_xml)
-        job = JobFactory.create(jobtype=jobtype)
+        job = JobFactory.create(jobtype=jobtype, name="testing")
         with mock.patch("jenkins.models.Jenkins", spec=True) as mock_jenkins:
             push_job_to_jenkins(job.pk)
 
         mock_jenkins.assert_called_with(
             job.server.url, username=u"root", password=u"testing")
         mock_jenkins.return_value.create_job.assert_called_with(
-            job.name, job.jobtype.config_xml)
+            "testing",
+            job_xml.replace(
+                "{{ notifications_url }}",
+                "http://localhost/jenkins/notifications/"))

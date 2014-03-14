@@ -27,7 +27,6 @@ class JobFactory(factory.DjangoModelFactory):
 
     server = factory.SubFactory(JenkinsServerFactory)
     jobtype = factory.SubFactory(JobTypeFactory)
-    name = factory.Sequence(lambda n: "testjob%d" % n)
 
 
 class BuildFactory(factory.DjangoModelFactory):

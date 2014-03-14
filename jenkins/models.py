@@ -1,5 +1,4 @@
 from django.db import models
-from django.utils import timezone
 
 from jenkinsapi.jenkins import Jenkins
 
@@ -71,10 +70,3 @@ class Artifact(models.Model):
     build = models.ForeignKey(Build)
     filename = models.CharField(max_length=255)
     url = models.CharField(max_length=255)
-
-
-def generate_job_name(job):
-    """
-    Generates a "unique" id.
-    """
-    return "%s_%d" % (job.name, int(timezone.now().toordinal()))
