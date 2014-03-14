@@ -19,14 +19,14 @@
       <tbody>
         {% for project in object_list %}
         <tr>
-          <td><a href="{% url 'projects_detail' project.pk %}">{{ project.name }}</a></td>
+          <td><a href="{% url 'project_detail' project.pk %}">{{ project.name }}</a></td>
           <td>{{ project.description }}</td>
-          <td><a href="{% url 'projects_projectbuild_list' pk=project.pk %}">{{ project.projectbuild_set.count }}</a></td>
+          <td><a href="{% url 'project_projectbuild_list' pk=project.pk %}">{{ project.projectbuild_set.count }}</a></td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
-    <p><a href="{% url 'projects_create' %}" class="btn btn-primary" role="button">Create new project »</a></p>
+    <p><a href="{% url 'project_create' %}" class="btn btn-primary" role="button">Create new project »</a></p>
   </div>
 </div>
 {% endblock %}

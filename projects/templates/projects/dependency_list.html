@@ -20,8 +20,8 @@
       <tbody>
         {% for dependency in dependencies %}
         <tr>
-          <td><a href="">{{ dependency.name }}</a></td>
-          <td>{{ dependency.type.name }}</a></td>
+          <td>{{ dependency.name }}</td>
+          <td><a href="{% url 'dependencytype_detail' pk=dependency.dependency_type.pk %}">{{ dependency.dependency_type.name }}</a></td>
           <td>{{ dependency.description }}</td>
           <td>{{ dependency.job.name }}</td>
         </tr>

@@ -204,7 +204,7 @@ class JenkinsServerIndexTest(WebTest):
         The index view should list all servers.
         """
         servers = JenkinsServerFactory.create_batch(5)
-        response = self.app.get(reverse("jenkinsserver_index"), user="testing")
+        response = self.app.get(reverse("jenkinsserver_list"), user="testing")
         self.assertEqual(200, response.status_code)
         self.assertEqual(servers, list(response.context["object_list"]))
 

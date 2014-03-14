@@ -59,9 +59,9 @@
         </div>
         <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav navbar-right">
-            <li class="{% active_url 'projects_index' %}"><a href="{% url 'projects_index' %}">Projects</a></li>
-            <li class="{% active_url 'dependencies_index' %}"><a href="{% url 'dependencies_index' %}">Dependencies</a></li>
-            <li class="{% active_url 'jenkinsserver_index' %}"><a href="{% url 'jenkinsserver_index' %}">Jenkins Servers</a></li>
+            <li class="{% active_url 'project_list' %}"><a href="{% url 'project_list' %}">Projects</a></li>
+            <li class="{% active_url 'dependency_list' %}"><a href="{% url 'dependency_list' %}">Dependencies</a></li>
+            <li class="{% active_url 'jenkinsserver_list' %}"><a href="{% url 'jenkinsserver_list' %}">Jenkins Servers</a></li>
             {% if request.user.is_superuser %}
             <li><a href="{% url 'admin:index' %}">Admin</a></li>
             {% endif %}

@@ -9,7 +9,8 @@ from braces.views import (
     SuccessURLRedirectListMixin)
 
 from jenkins.models import Build
-from projects.models import Project, Dependency, ProjectDependency, ProjectBuild
+from projects.models import (
+    Project, Dependency, ProjectDependency, ProjectBuild, DependencyType)
 from projects.forms import ProjectForm
 from projects.helpers import build_project
 
@@ -24,7 +25,7 @@ class ProjectCreateView(
     form_class = ProjectForm
 
     def get_success_url(self):
-      return reverse("projects_detail", kwargs={"pk": self.object.pk})
+      return reverse("project_detail", kwargs={"pk": self.object.pk})
 
 
 class ProjectListView(LoginRequiredMixin, ListView):
@@ -33,6 +34,9 @@ class ProjectListView(LoginRequiredMixin, ListView):
 
 
 class InitiateProjectBuildView(LoginRequiredMixin, View):
+    """
+    Starts building a project and redirects to the newly created ProjectBuild.
+    """
 
     def post(self, request, pk):
         project = Project.objects.get(pk=pk)
@@ -41,7 +45,7 @@ class InitiateProjectBuildView(LoginRequiredMixin, View):
             request, messages.INFO, "Build '%s' Queued." % projectbuild.build_id)
 
         url_args = {"project_pk": project.pk, "build_pk": projectbuild.pk}
-        url = reverse("projects_projectbuild_detail", kwargs=url_args)
+        url = reverse("project_projectbuild_detail", kwargs=url_args)
         return HttpResponseRedirect(url)
 
 
@@ -122,8 +126,24 @@ class DependencyListView(LoginRequiredMixin, ListView):
     model = Dependency
 
 
+class DependencyTypeDetailView(LoginRequiredMixin, DetailView):
+
+    model = DependencyType
+    context_object_name = "dependencytype"
+
+    def get_context_data(self, **kwargs):
+        """
+        Supplement the project with its dependencies.
+        """
+        context = super(
+            DependencyTypeDetailView, self).get_context_data(**kwargs)
+        context["dependencies"] = ProjectDependency.objects.filter(
+            dependency__dependency_type=context["dependencytype"])
+        return context
+
+
 __all__ = [
     "ProjectCreateView", "ProjectListView", "ProjectDetailView", 
     "DependencyCreateView", "InitiateProjectBuildView", "ProjectBuildListView",
-    "ProjectBuildDetailView", "DependencyListView",
+    "ProjectBuildDetailView", "DependencyListView", "DependencyTypeDetailView",
 ]

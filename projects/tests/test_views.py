@@ -8,7 +8,9 @@ from django_webtest import WebTest
 import mock
 
 from projects.models import ProjectDependency, Project, ProjectBuild
-from .factories import ProjectFactory, DependencyFactory, ProjectBuildFactory
+from .factories import (
+    ProjectFactory, DependencyFactory, ProjectBuildFactory,
+    DependencyTypeFactory)
 from jenkins.tests.factories import BuildFactory, JobFactory
 
 # TODO Introduce subclass of WebTest that allows easy assertions that a page
@@ -36,7 +38,7 @@ class ProjectDetailTest(WebTest):
         # TODO: Work out how to configure DjangoFactory to setup m2m through
         dependency = ProjectDependency.objects.create(
             project=project, dependency=DependencyFactory.create())
-        project_url = reverse("projects_detail", kwargs={"pk": project.pk})
+        project_url = reverse("project_detail", kwargs={"pk": project.pk})
         response = self.app.get(project_url, user="testing")
 
         self.assertEqual(200, response.status_code)
@@ -62,7 +64,7 @@ class ProjectCreateTest(WebTest):
         """
         We can create projects with a set of dependencies.
         """
-        project_url = reverse("projects_create")
+        project_url = reverse("project_create")
         response = self.app.get(project_url, user="testing")
         form = response.forms["create-project"]
         form["dependencies"].select_multiple(
@@ -85,7 +87,7 @@ class ProjectCreateTest(WebTest):
         """
         We can set the auto_track on dependencies of the project.
         """
-        project_url = reverse("projects_create")
+        project_url = reverse("project_create")
         response = self.app.get(project_url, user="testing")
         form = response.forms["create-project"]
         form["dependencies"].select_multiple(
@@ -108,7 +110,7 @@ class ProjectCreateTest(WebTest):
         """
         project = ProjectFactory.create(name="My Project")
 
-        project_url = reverse("projects_create")
+        project_url = reverse("project_create")
         response = self.app.get(project_url, user="testing")
         form = response.forms["create-project"]
         form["dependencies"].select_multiple(
@@ -137,7 +139,7 @@ class ProjectBuildViewTest(WebTest):
         project = ProjectFactory.create()
         dependency = ProjectDependency.objects.create(
             project=project, dependency=DependencyFactory.create())
-        project_url = reverse("projects_detail", kwargs={"pk": project.pk})
+        project_url = reverse("project_detail", kwargs={"pk": project.pk})
 
         projectbuild = ProjectBuildFactory.create(project=project)
         with mock.patch("projects.views.build_project") as mock_build_project:
@@ -180,10 +182,73 @@ class ProjectBuildListViewTest(WebTest):
         projectbuild = ProjectBuildFactory.create(project=project)
         builds = BuildFactory.create(job=job, build_id=projectbuild.build_id)
 
-        url = reverse("projects_projectbuild_list", kwargs={"pk": project.pk})
+        url = reverse("project_projectbuild_list", kwargs={"pk": project.pk})
         response = self.app.get(url, user="testing")
 
         self.assertEqual(200, response.status_code)
         self.assertEqual(
             set([projectbuild]), set(response.context["projectbuilds"]))
         self.assertEqual(project, response.context["project"])
+
+
+
+class DependencyListViewTest(WebTest):
+
+    def setUp(self):
+        self.user = User.objects.create_user("testing")
+
+    def test_page_requires_authenticated_user(self):
+        """
+        """
+        # TODO: We should assert that requests without a logged in user
+        # get redirected to login.
+
+    def test_dependency_list_view(self):
+        """
+        The Dependency List should render a list of dependencies with links to
+        their type detail views.
+        """
+        dependencies = DependencyFactory.create_batch(5)
+        url = reverse("dependency_list")
+        response = self.app.get(url, user="testing")
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(
+            set(dependencies), set(response.context["dependencies"]))
+
+        response = response.click(dependencies[0].dependency_type.name)
+        self.assertEqual(
+             dependencies[0].dependency_type.name, response.html.title.text)
+
+
+class DependencyTypeDetailTest(WebTest):
+
+    def setUp(self):
+        self.user = User.objects.create_user("testing")
+
+    def test_page_requires_authenticated_user(self):
+        """
+        """
+        # TODO: We should assert that requests without a logged in user
+        # get redirected to login.
+
+    def test_dependency_type_detail(self):
+        """
+        The detail view should render the dependency type name, description and
+        the job xml.
+        """
+        dependencytype = DependencyTypeFactory.create(
+            config_xml="this is the job xml")
+        dependencytype_url = reverse(
+            "dependencytype_detail", kwargs={"pk": dependencytype.pk})
+        response = self.app.get(dependencytype_url, user="testing")
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(
+            dependencytype, response.context["dependencytype"])
+
+        self.assertContains(
+            response, "<code>this is the job xml</code>", html=True)
+        self.assertContains(response, dependencytype.name)
+        self.assertContains(response, dependencytype.description)
+
