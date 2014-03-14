@@ -12,5 +12,5 @@ urlpatterns = patterns("",
     url(r"^projects/create/$", ProjectCreateView.as_view(), name="project_create"),
     url(r"^dependencies/create/$", DependencyCreateView.as_view(), name="dependency_create"),
     url(r"^dependencies/$", DependencyListView.as_view(), name="dependency_list"),
-    url(r"^dependencytypes/(?P<pk>\d+)/$", DependencyTypeDetailView.as_view(), name="dependencytype_detail"),
+    url(r"^dependencies/(?P<pk>\d+)/$", DependencyDetailView.as_view(), name="dependency_detail"),
 )

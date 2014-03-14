@@ -2,7 +2,7 @@ import factory
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-from projects.models import Project, Dependency, DependencyType, ProjectBuild
+from projects.models import Project, Dependency, ProjectBuild
 from jenkins.tests.factories import JobFactory
 
 
@@ -21,18 +21,10 @@ class ProjectFactory(factory.DjangoModelFactory):
     description = "This is a project."
 
 
-class DependencyTypeFactory(factory.DjangoModelFactory):
-    FACTORY_FOR = DependencyType
-
-    name = factory.Sequence(lambda n: "type%d" % n)
-    description = "This is a dependency type."
-    config_xml = "<?xml version='1.0' encoding='UTF-8'?><project></project>"
-
 
 class DependencyFactory(factory.DjangoModelFactory):
     FACTORY_FOR = Dependency
 
-    dependency_type = factory.SubFactory(DependencyTypeFactory)
     name = factory.Sequence(lambda n: "Dependency %d" % n)
     job = factory.SubFactory(JobFactory)
     description = "This is a dependency."

@@ -1,50 +1,13 @@
 from django.test import TestCase
-from django.test.utils import override_settings
 from django.contrib.auth.models import User
 from django.utils import timezone
 
 from projects.models import (
-    Project, DependencyType, Dependency, ProjectDependency, ProjectBuild,
+    Project, Dependency, ProjectDependency, ProjectBuild,
     generate_projectbuild_id)
 from .factories import (
-    ProjectFactory, DependencyFactory, DependencyTypeFactory, ProjectBuildFactory)
+    ProjectFactory, DependencyFactory, ProjectBuildFactory)
 from jenkins.tests.factories import JobFactory, BuildFactory, ArtifactFactory
-
-
-template_config = """
-<?xml version='1.0' encoding='UTF-8'?>
-<project><description>{{ dependency.description }}</description>
-</project>"
-"""
-
-
-class DependencyTypeTest(TestCase):
-
-    def test_instantiation(self):
-        """We can create DependencyTypes."""
-        dependency_type = DependencyType.objects.create(
-            name="my-test", config_xml="testing xml")
-
-    def test_generate_config_for_dependency(self):
-        """
-        We can use Django templating in the config.xml and this will be
-        interpreted correctly.
-        """
-        dependency_type = DependencyTypeFactory.create(
-            config_xml=template_config)
-        dependency = DependencyFactory.create()
-        job_xml = dependency_type.generate_config_for_dependency(dependency)
-        self.assertIn(dependency.description, job_xml)
-
-    @override_settings(NOTIFICATION_HOST="http://example.com")
-    def test_generate_config_for_dependency_provides_notification_host(self):
-        """
-        """
-        dependency_type = DependencyTypeFactory.create(
-            config_xml="{{ notification_host }}")
-        dependency = DependencyFactory.create()
-        job_xml = dependency_type.generate_config_for_dependency(dependency)
-        self.assertEqual("http://example.com/jenkins/notifications/", job_xml)
 
 
 class DependencyTest(TestCase):

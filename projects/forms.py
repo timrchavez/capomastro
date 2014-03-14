@@ -1,12 +1,12 @@
-from django.shortcuts import get_list_or_404
-from django.forms import ModelForm, BooleanField
+from django import forms
 
+from jenkins.models import JenkinsServer
 from projects.models import Project, Dependency, ProjectDependency
 
 
-class ProjectForm(ModelForm):
+class ProjectForm(forms.ModelForm):
 
-    auto_track = BooleanField(
+    auto_track = forms.BooleanField(
         help_text="Auto track dependencies", required=False)
 
     class Meta:
@@ -21,3 +21,13 @@ class ProjectForm(ModelForm):
                 auto_track=self.data.get("auto_track", False),
                 current_build=dependency.get_current_build())
         return project
+
+
+class DependencyForm(forms.ModelForm):
+
+    server = forms.ModelChoiceField(
+        queryset=JenkinsServer.objects, required=True)
+
+    class Meta:
+        model = Dependency
+        exclude = ["job"]

@@ -10,8 +10,8 @@ from braces.views import (
 
 from jenkins.models import Build
 from projects.models import (
-    Project, Dependency, ProjectDependency, ProjectBuild, DependencyType)
-from projects.forms import ProjectForm
+    Project, Dependency, ProjectDependency, ProjectBuild)
+from projects.forms import ProjectForm, DependencyForm
 from projects.helpers import build_project
 
 
@@ -113,11 +113,16 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
 
 
 class DependencyCreateView(
-    LoginRequiredMixin, PermissionRequiredMixin,
-    SuccessURLRedirectListMixin, FormValidMessageMixin, CreateView):
+    LoginRequiredMixin, PermissionRequiredMixin, FormValidMessageMixin, CreateView):
 
+    permission_required = "projects.add_dependency"
+    form_valid_message = "Dependency created"
+    form_class = DependencyForm
     model = Dependency
-    fields = ["name", "dependency_type"]
+
+    def get_success_url(self):
+        url_args = {"pk": self.object.pk}
+        return reverse("dependency_detail", kwargs=url_args)
 
 
 class DependencyListView(LoginRequiredMixin, ListView):
@@ -126,24 +131,14 @@ class DependencyListView(LoginRequiredMixin, ListView):
     model = Dependency
 
 
-class DependencyTypeDetailView(LoginRequiredMixin, DetailView):
+class DependencyDetailView(LoginRequiredMixin, DetailView):
 
-    model = DependencyType
-    context_object_name = "dependencytype"
-
-    def get_context_data(self, **kwargs):
-        """
-        Supplement the project with its dependencies.
-        """
-        context = super(
-            DependencyTypeDetailView, self).get_context_data(**kwargs)
-        context["dependencies"] = ProjectDependency.objects.filter(
-            dependency__dependency_type=context["dependencytype"])
-        return context
+    context_object_name = "dependency"
+    model = Dependency
 
 
 __all__ = [
     "ProjectCreateView", "ProjectListView", "ProjectDetailView", 
     "DependencyCreateView", "InitiateProjectBuildView", "ProjectBuildListView",
-    "ProjectBuildDetailView", "DependencyListView", "DependencyTypeDetailView",
+    "ProjectBuildDetailView", "DependencyListView", "DependencyDetailView"
 ]

@@ -1,7 +1,7 @@
 import factory
 import factory.fuzzy
 
-from jenkins.models import Build, Job, JenkinsServer, Artifact
+from jenkins.models import Build, Job, JenkinsServer, Artifact, JobType
 
 
 class JenkinsServerFactory(factory.DjangoModelFactory):
@@ -39,3 +39,11 @@ class ArtifactFactory(factory.DjangoModelFactory):
     build = factory.SubFactory(BuildFactory)
     filename = factory.fuzzy.FuzzyText(length=255)
     url = factory.Sequence(lambda n: "http://example.com/file/%d" % n)
+
+
+class JobTypeFactory(factory.DjangoModelFactory):
+    FACTORY_FOR = JobType
+
+    name = factory.Sequence(lambda n: "type%d" % n)
+    description = "This is a dependency type."
+    config_xml = "<?xml version='1.0' encoding='UTF-8'?><project></project>"

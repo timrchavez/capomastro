@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from projects.models import Dependency, DependencyType, Project, ProjectDependency
+from projects.models import Dependency, Project, ProjectDependency
 
 
 class ProjectDependencyInline(admin.TabularInline):
@@ -10,6 +10,5 @@ class ProjectDependencyInline(admin.TabularInline):
 class ProjectAdmin(admin.ModelAdmin):
       inlines = [ProjectDependencyInline]
 
-admin.site.register(DependencyType)
 admin.site.register(Dependency)
 admin.site.register(Project, ProjectAdmin)

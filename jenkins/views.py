@@ -7,7 +7,7 @@ from django.views.generic import View, ListView, DetailView, TemplateView
 from braces.views import (
     LoginRequiredMixin, PermissionRequiredMixin, CsrfExemptMixin)
 
-from jenkins.models import JenkinsServer, Build, Job
+from jenkins.models import JenkinsServer, Build, Job, JobType
 from jenkins.tasks import import_build
 
 
@@ -105,6 +105,13 @@ class JenkinsServerJobBuildsIndexView(LoginRequiredMixin, TemplateView):
         return context
 
 
+class JobTypeDetailView(LoginRequiredMixin, DetailView):
+
+    model = JobType
+    context_object_name = "jobtype"
+
+
 __all__ = [
     "NotificationHandlerView", "JenkinsServerListView",
-    "JenkinsServerDetailView", "JenkinsServerJobBuildsIndexView"]
+    "JenkinsServerDetailView", "JenkinsServerJobBuildsIndexView",
+    "JobTypeDetailView"]

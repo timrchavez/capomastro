@@ -10,7 +10,8 @@ import mock
 
 from jenkins.views import NotificationHandlerView
 from jenkins.models import Build
-from .factories import JobFactory, JenkinsServerFactory, BuildFactory
+from .factories import (
+    JobFactory, JenkinsServerFactory, BuildFactory, JobTypeFactory)
 
 
 class NotificationHandlerTest(TestCase):
@@ -259,3 +260,36 @@ class ServerJobBuildIndexTest(WebTest):
         self.assertEqual(server, response.context["server"])
         self.assertEqual(job, response.context["job"])
         self.assertEqual(set(builds), set(response.context["builds"]))
+
+
+
+class JobTypeDetailTest(WebTest):
+
+    def setUp(self):
+        self.user = User.objects.create_user("testing")
+
+    def test_page_requires_authenticated_user(self):
+        """
+        """
+        # TODO: We should assert that requests without a logged in user
+        # get redirected to login.
+
+    def test_jobtype_detail(self):
+        """
+        The detail view should render the job type name, description and
+        the job xml.
+        """
+        jobtype = JobTypeFactory.create(
+            config_xml="this is the job xml")
+        jobtype_url = reverse(
+            "jobtype_detail", kwargs={"pk": jobtype.pk})
+        response = self.app.get(jobtype_url, user="testing")
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(
+            jobtype, response.context["jobtype"])
+
+        self.assertContains(
+            response, "<code>this is the job xml</code>", html=True)
+        self.assertContains(response, jobtype.name)
+        self.assertContains(response, jobtype.description)

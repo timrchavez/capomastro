@@ -53,3 +53,37 @@ class Artifact(models.Model):
     build = models.ForeignKey(Build)
     filename = models.CharField(max_length=255)
     url = models.CharField(max_length=255)
+
+
+def get_context_for_template(dependency):
+    """
+    Returns a Context for the Job XML templating.
+    """
+    settings = DefaultSettings({"NOTIFICATION_HOST": "http://localhost"})
+    notifications_url = get_notifications_url(settings.NOTIFICATION_HOST)
+    context_vars = {
+        "notification_host": get_notifications_url(settings.NOTIFICATION_HOST),
+        "dependency": dependency,
+    }
+    return Context(context_vars)
+
+
+class JobType(models.Model):
+    """
+    Used as a model for creating new Jenkins jobs.
+    """
+
+    name = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    config_xml = models.TextField()
+
+    def __str__(self):
+        return self.name
+
+    def generate_config_for_dependency(self, dependency):
+        """
+        Parse the config XML as a Django template, replacing {{}} holders etc
+        as appropriate.
+        """
+        context = get_context_for_template(dependency)
+        return Template(self.config_xml).render(context)

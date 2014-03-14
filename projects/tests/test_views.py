@@ -9,8 +9,7 @@ import mock
 
 from projects.models import ProjectDependency, Project, ProjectBuild
 from .factories import (
-    ProjectFactory, DependencyFactory, ProjectBuildFactory,
-    DependencyTypeFactory)
+    ProjectFactory, DependencyFactory, ProjectBuildFactory)
 from jenkins.tests.factories import BuildFactory, JobFactory
 
 # TODO Introduce subclass of WebTest that allows easy assertions that a page
@@ -221,34 +220,41 @@ class DependencyListViewTest(WebTest):
              dependencies[0].dependency_type.name, response.html.title.text)
 
 
-class DependencyTypeDetailTest(WebTest):
+class DependencyCreateTest(WebTest):
 
     def setUp(self):
-        self.user = User.objects.create_user("testing")
-
-    def test_page_requires_authenticated_user(self):
-        """
-        """
-        # TODO: We should assert that requests without a logged in user
-        # get redirected to login.
-
-    def test_dependency_type_detail(self):
-        """
-        The detail view should render the dependency type name, description and
-        the job xml.
-        """
-        dependencytype = DependencyTypeFactory.create(
+        self.user = User.objects.create_superuser(
+            "testing", "testing@example.com", "password")
+        self.dependencytype = DependencyTypeFactory.create(
             config_xml="this is the job xml")
-        dependencytype_url = reverse(
-            "dependencytype_detail", kwargs={"pk": dependencytype.pk})
-        response = self.app.get(dependencytype_url, user="testing")
 
-        self.assertEqual(200, response.status_code)
-        self.assertEqual(
-            dependencytype, response.context["dependencytype"])
+    def test_page_requires_permission(self):
+        """
+        """
+        # TODO: We should assert that requests without the
+        # "projects.add_project" get redirected to login.
 
-        self.assertContains(
-            response, "<code>this is the job xml</code>", html=True)
-        self.assertContains(response, dependencytype.name)
-        self.assertContains(response, dependencytype.description)
+    def test_create_dependency(self):
+        """
+        We can create dependencies with jobs in servers.
+        """
+        project_url = reverse("dependency_create")
+        response = self.app.get(project_url, user="testing")
 
+        form = response.forms["dependency-form"]
+        form["dependency_type"].select(self.dependencytype.pk)
+        form["name"].value = "My Dependency"
+
+        response = form.submit().follow()
+#
+#        response = form.submit()
+#
+#        project = Project.objects.get(name="My Project")
+#        dependencies = ProjectDependency.objects.filter(project=project)
+#
+#        self.assertEqual(
+#            [False, False],
+#            list(dependencies.values_list("auto_track", flat=True)))
+#        self.assertEqual(
+#            set([self.dependency1.name, self.dependency2.name]),
+#            set(dependencies.values_list("dependency__name", flat=True)))
