@@ -319,6 +319,16 @@ class InitiateProjectBuildTest(WebTest):
             [str(x.pk) for x in [dep1, dep2, dep3]],
             [x.value for x in form.fields["dependencies"]])
 
+        with mock.patch("projects.helpers.build_job") as build_job_mock:
+            response = form.submit().follow()
+
+        projectbuild = response.context["projectbuild"]
+
+        build_job_mock.delay.assert_has_calls([
+            mock.call(dep1.job.pk, projectbuild.build_id),
+            mock.call(dep2.job.pk, projectbuild.build_id),
+            mock.call(dep3.job.pk, projectbuild.build_id)])
+
     def test_project_build_form_builds_only_selected(self):
         """
         We expect all dependencies to be selected by default.
@@ -332,43 +342,37 @@ class InitiateProjectBuildTest(WebTest):
             "project_initiate_projectbuild", kwargs={"pk": project.pk})
         response = self.app.get(url, user="testing")
         form = response.forms["buildproject-form"]
-        # We expect all dependencies to be selected by default
-        self.assertEqual(
-            [str(x.pk) for x in [dep1, dep2, dep3]],
-            [x.value for x in form.fields["dependencies"]])
 
+        form["dependencies"] = [str(dep1.pk), str(dep3.pk)]
 
-# class ProjectBuildTest(WebTest):
+        with mock.patch("projects.helpers.build_job") as build_job_mock:
+            response = form.submit().follow()
 
-#     def setUp(self):
-#         self.user = User.objects.create_user("testing")
+        projectbuild = response.context["projectbuild"]
 
-#     def test_page_requires_authenticated_user(self):
-#         """
-#         """
-#         # TODO: We should assert that requests without a logged in user
-#         # get redirected to login.
+        build_job_mock.delay.assert_has_calls([
+            mock.call(dep1.job.pk, projectbuild.build_id),
+            mock.call(dep3.job.pk, projectbuild.build_id)])
 
-#     def test_build_project_view(self):
-#         """
-#         The detail view should render the server and jobs for the server.
-#         """
-#         project = ProjectFactory.create()
-#         ProjectDependency.objects.create(
-#             project=project, dependency=DependencyFactory.create())
-#         project_url = reverse("project_detail", kwargs={"pk": project.pk})
+    def test_project_build_form_requires_selection(self):
+        """
+        If no dependencies are selected, then we should get an appropriate
+        error.
+        """
+        [dep1, dep2, dep3] = DependencyFactory.create_batch(3)
+        project = ProjectFactory.create()
+        for dep in [dep1, dep2, dep3]:
+            dependency = ProjectDependency.objects.create(
+                project=project, dependency=dep)
+        url = reverse(
+            "project_initiate_projectbuild", kwargs={"pk": project.pk})
+        response = self.app.get(url, user="testing")
+        form = response.forms["buildproject-form"]
 
-#         projectbuild = ProjectBuildFactory.create(project=project)
-#         with mock.patch("projects.views.build_project") as mock_build_project:
-#             mock_build_project.return_value = projectbuild
-#             response = self.app.get(project_url, user="testing")
-#             response = response.forms["build-project"].submit().follow()
+        form["dependencies"] = []
 
-#         mock_build_project.assert_called_once_with(project, user=self.user)
-#         self.assertEqual(200, response.status_code)
+        with mock.patch("projects.helpers.build_job") as build_job_mock:
+            response = form.submit()
 
-#         self.assertEqual(
-#             "Project Build %s" % projectbuild.build_id,
-#             response.html.title.text)
-#         self.assertContains(
-#             response, "Build '%s' Queued." % projectbuild.build_id)
+        self.assertContains(response, "Must select at least one dependency.")
+        self.assertEqual([], build_job_mock.delay.mock_calls)

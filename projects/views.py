@@ -49,20 +49,23 @@ class InitiateProjectBuildView(LoginRequiredMixin, FormView):
         form = form_class(**self.get_form_kwargs())
         dependencies = project.dependencies
         form.fields["dependencies"].queryset = dependencies
-        form.fields["dependencies"].initial = [x.pk for x in dependencies.all()]
+        initial_pks = [x.pk for x in dependencies.all()]
+        form.fields["dependencies"].initial = initial_pks
+        form.fields["project"].initial = project
         return form
 
     def form_valid(self, form):
-        pass
-        # project = Project.objects.get(pk=pk)
-        # projectbuild = build_project(project, user=request.user)
-        # messages.add_message(
-        #     request, messages.INFO,
-        #     "Build '%s' Queued." % projectbuild.build_id)
+        project = form.cleaned_data["project"]
+        projectbuild = build_project(
+            project, user=self.request.user,
+            dependencies=form.cleaned_data["dependencies"])
+        messages.add_message(
+           self.request, messages.INFO,
+           "Build '%s' Queued." % projectbuild.build_id)
 
-        # url_args = {"project_pk": project.pk, "build_pk": projectbuild.pk}
-        # url = reverse("project_projectbuild_detail", kwargs=url_args)
-        # return HttpResponseRedirect(url)
+        url_args = {"project_pk": project.pk, "build_pk": projectbuild.pk}
+        url = reverse("project_projectbuild_detail", kwargs=url_args)
+        return HttpResponseRedirect(url)
 
 
 class ProjectBuildListView(LoginRequiredMixin, ListView):

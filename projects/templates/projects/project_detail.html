@@ -32,12 +32,8 @@
       </tbody>
     </table>
     <p>
-      <form action="{% url 'project_initiate_projectbuild' pk=project.pk %}" method="post" class="form" id="build-project">
-        {% csrf_token %}
-        {% buttons %}
-          <button type="submit" class="btn btn-primary">Build project»</button>
-        {% endbuttons %}
-      </form>
+      <p>
+        <a href="{% url 'project_initiate_projectbuild' pk=project.pk %}" class="btn btn-primary" role="button">Build project »</a>
     </p>
   </div>
   <div class="row">

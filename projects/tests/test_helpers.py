@@ -63,7 +63,8 @@ class BuildProjectTest(TestCase):
             dependency = ProjectDependency.objects.create(
                 project=project, dependency=dep)
 
-        new_build = build_project(project, dependencies=[dep1, dep2])
+        new_build = build_project(
+            project, dependencies=[dep1, dep2], queue_build=False)
 
         projectbuild_dependencies = ProjectBuildDependency.objects.filter(
             projectbuild=new_build)

@@ -52,5 +52,9 @@ class DependencyForm(forms.ModelForm):
 
 class ProjectBuildForm(forms.Form):
 
-    dependencies = forms.ModelMultipleChoiceField(Dependency.objects,
-        required=True, widget=forms.CheckboxSelectMultiple)
+    dependencies = forms.ModelMultipleChoiceField(
+        Dependency.objects, required=True, widget=forms.CheckboxSelectMultiple,
+        error_messages={"required": "Must select at least one dependency."})
+    project = forms.ModelChoiceField(
+        Project.objects, required=True, widget=forms.HiddenInput)
+
