@@ -5,8 +5,7 @@ from jenkinsapi.jenkins import Jenkins
 
 from jenkins.models import Build, JobType
 from .helpers import mock_url
-from .factories import (
-    BuildFactory, JenkinsServerFactory, JobTypeFactory, JobFactory)
+from .factories import BuildFactory, JenkinsServerFactory
 
 
 class JenkinsServerTest(TestCase):
@@ -41,5 +40,5 @@ class JobTypeTest(TestCase):
 
     def test_instantiation(self):
         """We can create JobTypes."""
-        jobtype = JobType.objects.create(
+        JobType.objects.create(
             name="my-test", config_xml="testing xml")

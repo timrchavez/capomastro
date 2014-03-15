@@ -4,7 +4,10 @@ from django.contrib.auth.models import User
 from django_webtest import WebTest
 import mock
 
-from projects.models import ProjectDependency, Project
+from projects.models import (
+    ProjectDependency, Project, Dependency, ProjectBuildDependency)
+from projects.helpers import build_project
+from jenkins.models import Job
 from .factories import (
     ProjectFactory, DependencyFactory, ProjectBuildFactory)
 from jenkins.tests.factories import (
@@ -27,20 +30,25 @@ class ProjectDetailTest(WebTest):
         # TODO: We should assert that requests without a logged in user
         # get redirected to login.
 
-    def test_server_detail(self):
+    def test_project_detail(self):
         """
-        The detail view should render the server and jobs for the server.
+        The detail view should render the project.
         """
         project = ProjectFactory.create()
         # TODO: Work out how to configure DjangoFactory to setup m2m through
         dependency = ProjectDependency.objects.create(
             project=project, dependency=DependencyFactory.create())
+        # TODO: It'd be nice if this was driven by ProjectBuildFactory.
+        projectbuilds = [
+            build_project(project, queue_build=False) for x in range(6)]
+
         project_url = reverse("project_detail", kwargs={"pk": project.pk})
         response = self.app.get(project_url, user="testing")
-
         self.assertEqual(200, response.status_code)
         self.assertEqual(project, response.context["project"])
         self.assertEqual([dependency], list(response.context["dependencies"]))
+        self.assertEqual(
+            projectbuilds[:5], list(response.context["projectbuilds"]))
 
 
 class ProjectCreateTest(WebTest):
@@ -118,7 +126,7 @@ class ProjectCreateTest(WebTest):
         self.assertContains(response, "Project with this Name already exists.")
 
 
-class ProjectBuildViewTest(WebTest):
+class ProjectBuildTest(WebTest):
 
     def setUp(self):
         self.user = User.objects.create_user("testing")
@@ -154,7 +162,7 @@ class ProjectBuildViewTest(WebTest):
             response, "Build '%s' Queued." % projectbuild.build_id)
 
 
-class ProjectBuildListViewTest(WebTest):
+class ProjectBuildListTest(WebTest):
 
     def setUp(self):
         self.user = User.objects.create_user("testing")
@@ -210,7 +218,44 @@ class ProjectBuildListViewTest(WebTest):
         self.assertEqual(project, response.context["project"])
 
 
-class DependencyListViewTest(WebTest):
+class ProjectBuildDetailTest(WebTest):
+
+    def setUp(self):
+        self.user = User.objects.create_user("testing")
+
+    def test_page_requires_authenticated_user(self):
+        """
+        """
+        # TODO: We should assert that requests without a logged in user
+        # get redirected to login.
+
+    def test_project_build_detail_view(self):
+        """
+        Project build detail should show the build.
+        """
+        project = ProjectFactory.create()
+        dependency = DependencyFactory.create()
+        ProjectDependency.objects.create(
+            project=project, dependency=dependency)
+
+        projectbuild = build_project(project, queue_build=False)
+        build = BuildFactory.create(
+            job=dependency.job, build_id=projectbuild.build_id)
+
+        url = reverse(
+            "project_projectbuild_detail",
+            kwargs={"project_pk": project.pk, "build_pk": build.pk})
+        response = self.app.get(url, user="testing")
+
+        dependencies = ProjectBuildDependency.objects.filter(
+            projectbuild=projectbuild)
+
+        self.assertEqual(projectbuild, response.context["projectbuild"])
+        self.assertEqual(
+            list(dependencies), list(response.context["dependencies"]))
+
+
+class DependencyListTest(WebTest):
 
     def setUp(self):
         self.user = User.objects.create_user("testing")
@@ -262,8 +307,19 @@ class DependencyCreateTest(WebTest):
         response = self.app.get(project_url, user="testing")
 
         form = response.forms["dependency-form"]
-        form["job_type"].select(self.jobtype.pk)
+        form["jobtype"].select(self.jobtype.pk)
         form["server"].select(self.server.pk)
         form["name"].value = "My Dependency"
 
-        response = form.submit().follow()
+        with mock.patch("projects.forms.push_job_to_jenkins") as job_mock:
+            response = form.submit().follow()
+
+        new_dependency = Dependency.objects.get(name="My Dependency")
+        job = Job.objects.get(jobtype=self.jobtype, server=self.server)
+        job_mock.delay.assert_called_once_with(job.pk)
+        self.assertEqual(new_dependency.job, job)
+
+
+class DependencyDetailTest(WebTest):
+
+    pass # TODO assert we get the projects and builds

@@ -2,6 +2,8 @@ from django import forms
 
 from jenkins.models import JenkinsServer, JobType
 from projects.models import Project, Dependency, ProjectDependency
+from jenkins.helpers import create_job
+from jenkins.tasks import push_job_to_jenkins
 
 
 class ProjectForm(forms.ModelForm):
@@ -28,8 +30,8 @@ class ProjectForm(forms.ModelForm):
 
 class DependencyForm(forms.ModelForm):
 
-    job_type = forms.ModelChoiceField(
-        queryset=JobType.objects, required=True,
+    jobtype = forms.ModelChoiceField(
+        queryset=JobType.objects, required=True, label="Job type",
         help_text="Select a job type to use.")
     server = forms.ModelChoiceField(
         queryset=JenkinsServer.objects, required=True)
@@ -40,4 +42,9 @@ class DependencyForm(forms.ModelForm):
 
     def save(self, commit=True):
         dependency = super(DependencyForm, self).save(commit=commit)
+        job = create_job(
+            self.cleaned_data["jobtype"], self.cleaned_data["server"])
+        push_job_to_jenkins.delay(job.pk)
+        dependency.job = job
+        dependency.save()
         return dependency

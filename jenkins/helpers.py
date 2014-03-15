@@ -1,7 +1,5 @@
 import logging
 
-from django.conf import settings
-
 from jenkins.models import Job, Build, Artifact
 from jenkins.utils import generate_job_name
 
@@ -18,6 +16,7 @@ def import_build_for_job(job_pk, build_number):
 
     jenkins_job = client.get_job(job.name)
     build_result = jenkins_job.get_build(build_number)
+
     # TODO: Shouldn't access _data here.
     build_details = {
         "status": build_result.get_status(),

@@ -55,7 +55,7 @@ class Build(models.Model):
     number = models.IntegerField()
     duration = models.IntegerField(null=True)
     url = models.CharField(max_length=255)
-    phase = models.CharField(max_length=25) # FINISHED, STARTED, COMPLETED
+    phase = models.CharField(max_length=25)  # FINISHED, STARTED, COMPLETED
     status = models.CharField(max_length=255)
 
     class Meta:

@@ -142,7 +142,8 @@ class ProjectBuildTest(TestCase):
         self.assertEqual(self.user, projectbuild.requested_by)
         self.assertIsNotNone(projectbuild.requested_at)
         self.assertIsNone(projectbuild.ended_at)
-        self.assertEqual("INCOMPLETE", projectbuild.status)
+        self.assertEqual("UNKNOWN", projectbuild.status)
+        self.assertEqual("UNKNOWN", projectbuild.phase)
 
     def test_build_id(self):
         """
@@ -153,7 +154,7 @@ class ProjectBuildTest(TestCase):
         expected_build_id = timezone.now().strftime("%Y%m%d.0")
         self.assertEqual(expected_build_id, projectbuild.build_id)
 
-    def test_project_build_updates_when_build_created(self):
+    def test_projectbuild_updates_when_build_created(self):
         """
         If we have a ProjectBuild with a dependency, which is associated with a
         job, and we get a build from that job, then if the build_id is correct,
@@ -169,16 +170,42 @@ class ProjectBuildTest(TestCase):
             project=project, dependency=dependency2)
 
         from projects.helpers import build_project
-        project_build = build_project(project)
+        projectbuild = build_project(project, queue_build=False)
 
         build1 = BuildFactory.create(
-            job=dependency1.job, build_id=project_build.build_id)
+            job=dependency1.job, build_id=projectbuild.build_id)
 
         build_dependencies = ProjectBuildDependency.objects.filter(
-            projectbuild=project_build)
+            projectbuild=projectbuild)
         self.assertEqual(2, build_dependencies.count())
-        dependency = build_dependencies.get(job=dependency1.job)
+        dependency = build_dependencies.get(dependency=dependency1)
         self.assertEqual(build1, dependency.build)
 
-        dependency = build_dependencies.get(job=dependency2.job)
+        dependency = build_dependencies.get(dependency=dependency2.job)
         self.assertIsNone(dependency.build)
+
+    def test_project_build_status_when_all_dependencies_have_builds(self):
+        """
+        When we have FINISHED builds for all the dependencies, the projectbuild
+        state should be FINISHED.
+        """
+        project = ProjectFactory.create()
+        dependency1 = DependencyFactory.create()
+        ProjectDependency.objects.create(
+            project=project, dependency=dependency1)
+
+        dependency2 = DependencyFactory.create()
+        ProjectDependency.objects.create(
+            project=project, dependency=dependency2)
+
+        from projects.helpers import build_project
+        projectbuild = build_project(project, queue_build=False)
+
+        for job in [dependency1.job, dependency2.job]:
+            BuildFactory.create(
+                job=job, build_id=projectbuild.build_id, phase="FINISHED")
+
+        projectbuild = ProjectBuild.objects.get(pk=projectbuild.pk)
+        self.assertEqual("SUCCESS", projectbuild.status)
+        self.assertEqual("FINISHED", projectbuild.phase)
+        self.assertIsNotNone(projectbuild.ended_at)

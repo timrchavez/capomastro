@@ -17,10 +17,26 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'jenkins', ['JobType'])
 
+        # Adding field 'Job.jobtype'
+        # DEFAULT = 1 which links to the first jobtype...this is ahead of a
+        # reset of migrations...
+        db.add_column(u'jenkins_job', 'jobtype',
+                      self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['jenkins.JobType']),
+                      keep_default=False)
+
+        # Adding unique constraint on 'Job', fields ['server', 'name']
+        db.create_unique(u'jenkins_job', ['server_id', 'name'])
+
 
     def backwards(self, orm):
+        # Removing unique constraint on 'Job', fields ['server', 'name']
+        db.delete_unique(u'jenkins_job', ['server_id', 'name'])
+
         # Deleting model 'JobType'
         db.delete_table(u'jenkins_jobtype')
+
+        # Deleting field 'Job.jobtype'
+        db.delete_column(u'jenkins_job', 'jobtype_id')
 
 
     models = {
@@ -52,9 +68,10 @@ class Migration(SchemaMigration):
             'username': ('django.db.models.fields.CharField', [], {'max_length': '255'})
         },
         u'jenkins.job': {
-            'Meta': {'object_name': 'Job'},
+            'Meta': {'unique_together': "(('server', 'name'),)", 'object_name': 'Job'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'jobtype': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['jenkins.JobType']"}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'server': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['jenkins.JenkinsServer']"})
         },
         u'jenkins.jobtype': {

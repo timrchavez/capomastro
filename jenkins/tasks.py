@@ -1,8 +1,8 @@
 from celery.utils.log import get_task_logger
 from celery import shared_task
 
-from jenkins.helpers import import_build_for_job, create_job
-from jenkins.models import Job, JobType, JenkinsServer
+from jenkins.helpers import import_build_for_job
+from jenkins.models import Job
 from jenkins.utils import get_job_xml_for_upload
 
 logger = get_task_logger(__name__)

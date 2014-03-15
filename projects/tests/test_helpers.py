@@ -31,8 +31,8 @@ class BuildProjectTest(TestCase):
             projectbuild=new_build)
         self.assertEqual(2, build_dependencies.count())
         self.assertEqual(
-            [dependency1.job.pk, dependency2.job.pk],
-            list(build_dependencies.values_list("job", flat=True)))
+            [dependency1.pk, dependency2.pk],
+            list(build_dependencies.values_list("dependency", flat=True)))
         mock_build_job.delay.assert_has_calls(
             [mock.call(dependency1.job.pk, new_build.build_id),
              mock.call(dependency2.job.pk, new_build.build_id)])
@@ -51,4 +51,5 @@ class BuildProjectTest(TestCase):
             new_build = build_project(project)
             self.assertIsInstance(new_build, ProjectBuild)
 
+        self.assertIsNotNone(new_build.requested_at)
         self.assertItemsEqual([], mock_build_job.call_args_list)

@@ -1,14 +1,11 @@
-import logging
-
 from django.test import TestCase
 from django.test.utils import override_settings
 
 import mock
 
 from jenkins.tasks import build_job, push_job_to_jenkins
-from jenkins.models import JenkinsServer
 from .factories import (
-    JobFactory, JenkinsServerFactory, BuildFactory, JobTypeFactory)
+    JobFactory, JenkinsServerFactory, JobTypeFactory)
 
 
 class BuildJobTaskTest(TestCase):
@@ -76,4 +73,4 @@ class CreateJobTaskTest(TestCase):
             "testing",
             job_xml.replace(
                 "{{ notifications_url }}",
-                "http://localhost/jenkins/notifications/"))
+                "http://localhost/jenkins/notifications/").strip())

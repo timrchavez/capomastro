@@ -12,7 +12,7 @@ def build_project(project, user=None, queue_build=True):
     for dependency in project.dependencies.all():
         ProjectBuildDependency.objects.create(
             projectbuild=build,
-            job=dependency.job)
+            dependency=dependency)
         if queue_build:
             build_job.delay(dependency.job.pk, build.build_id)
     return build

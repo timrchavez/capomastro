@@ -9,7 +9,8 @@ from braces.views import (
 
 from jenkins.models import Build
 from projects.models import (
-    Project, Dependency, ProjectDependency, ProjectBuild)
+    Project, Dependency, ProjectDependency, ProjectBuild,
+    ProjectBuildDependency)
 from projects.forms import ProjectForm, DependencyForm
 from projects.helpers import build_project
 
@@ -85,9 +86,8 @@ class ProjectBuildDetailView(LoginRequiredMixin, DetailView):
     def _get_project_from_url(self):
         return get_object_or_404(Project, pk=self.kwargs["project_pk"])
 
-    def _get_related_builds(self, projectbuild):
-        # TODO: Fix this with a test.
-        return Build.objects.filter(build_id=projectbuild.build_id)
+    def _get_build_dependencies(self, projectbuild):
+        return ProjectBuildDependency.objects.filter(projectbuild=projectbuild)
 
     def get_context_data(self, **kwargs):
         """
@@ -96,7 +96,8 @@ class ProjectBuildDetailView(LoginRequiredMixin, DetailView):
         context = super(
             ProjectBuildDetailView, self).get_context_data(**kwargs)
         context["project"] = self._get_project_from_url()
-        context["builds"] = self._get_related_builds(context["projectbuild"])
+        context["dependencies"] = self._get_build_dependencies(
+            context["projectbuild"])
         return context
 
 
@@ -113,6 +114,8 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
             ProjectDetailView, self).get_context_data(**kwargs)
         context["dependencies"] = ProjectDependency.objects.filter(
             project=context["project"])
+        context["projectbuilds"] = ProjectBuild.objects.filter(
+            project=context["project"])[:5]
         return context
 
 
@@ -140,6 +143,16 @@ class DependencyDetailView(LoginRequiredMixin, DetailView):
 
     context_object_name = "dependency"
     model = Dependency
+
+    def get_context_data(self, **kwargs):
+        """
+        Supplement the dependency.
+        """
+        context = super(
+            DependencyDetailView, self).get_context_data(**kwargs)
+        context["builds"] = Build.objects.filter(
+            job=context["dependency"].job)
+        return context
 
 
 __all__ = [

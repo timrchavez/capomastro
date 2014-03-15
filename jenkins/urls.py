@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url, include
+from django.conf.urls import patterns, url
 
 from jenkins.views import *
 
@@ -9,5 +9,5 @@ urlpatterns = patterns("",
     url(r"^servers/$", JenkinsServerListView.as_view(), name="jenkinsserver_list"),
     url(r"^servers/(?P<pk>\d+)/$", JenkinsServerDetailView.as_view(), name="jenkinsserver_detail"),
     url(r"^servers/(?P<server_pk>\d+)/jobs/(?P<job_pk>\d+)/",
-      JenkinsServerJobBuildsIndexView.as_view(), name="jenkinsserver_job_builds_index"),
+        JenkinsServerJobBuildsIndexView.as_view(), name="jenkinsserver_job_builds_index"),
 )

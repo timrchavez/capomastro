@@ -71,7 +71,6 @@ class GetContextForTemplate(SimpleTestCase):
             "http://localhost/jenkins/notifications/",
             context.get("notifications_url"))
 
-
 template_config = """
 <?xml version='1.0' encoding='UTF-8'?>
 <project>
@@ -104,6 +103,8 @@ template_config = """
 
 class GetTemplatedJobTest(TestCase):
 
+    # TODO: How much verification of Job XML documents should we do?
+
     @override_settings(NOTIFICATION_HOST="http://example.com")
     def test_get_job_xml_for_upload(self):
         """
@@ -117,6 +118,17 @@ class GetTemplatedJobTest(TestCase):
         self.assertIn(job.jobtype.description, xml_for_upload)
         self.assertIn(expected_url, xml_for_upload)
 
+    def test_get_job_xml_for_upload_strips_leading_spaces(self):
+        """
+        If we attempt to upload an XML document that has leading whitespace,
+        then Jenkins will fail with a weird error.
+
+        "processing instruction can not have PITarget with reserveld xml"
+        """
+        jobtype = JobTypeFactory.create(config_xml="\ntesting")
+        job = JobFactory.create(jobtype=jobtype)
+        self.assertEqual("testing", get_job_xml_for_upload(job))
+
 
 class GenerateNameJobTest(TestCase):
 
@@ -125,11 +137,11 @@ class GenerateNameJobTest(TestCase):
         generate_job_name should generate a name for the job on the server when
         given a jobtype.
         """
-        job = JobFactory.create()
-        now  = timezone.now()
+        job = JobFactory.create(name=u"My Test Job")
+        now = timezone.now()
 
         with mock.patch("jenkins.utils.timezone") as timezone_mock:
             timezone_mock.now.return_value = now
             name = generate_job_name(job)
-        expected_job_name = "%s_%d" % (job.name, int(now.toordinal()))
+        expected_job_name = u"my-test-job_%s" % now.strftime("%s")
         self.assertEqual(name, expected_job_name)

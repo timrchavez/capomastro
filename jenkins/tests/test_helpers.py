@@ -1,6 +1,4 @@
-import logging
-
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase
 
 import mock
 import jenkinsapi.job

@@ -1,1 +1,65 @@
-TODO
+{% extends "base.html" %}
+{% load bootstrap3 %}
+{% load wooster_bootstrap %}
+{% load jenkins_tags %}
+{% load projects_tags %}
+
+{% block page_title %}Dependency {{ dependency.name }}{% endblock %}
+{% block page_class %}dependency{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div>
+      <h2>{{ dependency.name }}</h2>
+    </div>
+  </div>
+  <div class="row">
+    <h3>Builds</h3>
+    <h3>Builds</h3>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Build Id</th>
+          <th>Duration</th>
+          <th>URL</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for build in builds %}
+        <tr class="{{ build.status|build_status_to_class }}">
+          <td>{{ build.number }}</a></td>
+          <td><a href="{% build_url build.build_id %}">{{ build.build_id }}</a></td>
+          <td>{{ build.duration|build_time_to_timedelta }}</a></td>
+          <td><a href="{{ build.url }}">{{ build.url }}</a></td>
+          <td>{{ build.status }}</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">There are no builds for this dependency.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="row">
+    <h3>Projects</h3>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for build in builds %}
+        <tr>
+          <td>TODO</td>
+        </tr>
+        {% empty %}
+        <tr><td>This dependency is not used.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

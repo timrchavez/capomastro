@@ -79,7 +79,7 @@ class ProjectBuildDependency(models.Model):
     """
     projectbuild = models.ForeignKey("ProjectBuild")
     build = models.ForeignKey(Build, blank=True, null=True)
-    job = models.ForeignKey(Job)
+    dependency = models.ForeignKey(Dependency)
 
     class Meta:
         verbose_name_plural = "project build dependencies"
@@ -92,7 +92,8 @@ class ProjectBuild(models.Model):
     requested_by = models.ForeignKey(User, null=True, blank=True)
     requested_at = models.DateTimeField(auto_now_add=True)
     ended_at = models.DateTimeField(null=True)
-    status = models.CharField(max_length=10, default="INCOMPLETE")
+    status = models.CharField(max_length=10, default="UNKNOWN")
+    phase = models.CharField(max_length=25, default="UNKNOWN")
     build_id = models.CharField(max_length=20)
 
     build_dependencies = models.ManyToManyField(
@@ -147,7 +148,28 @@ def handle_new_build(sender, created, instance, **kwargs):
 def handle_builds_for_projectbuild(sender, created, instance, **kwargs):
     if instance.build_id:
         dependency = ProjectBuildDependency.objects.filter(
-            job=instance.job, projectbuild__build_id=instance.build_id).first()
+            dependency__job=instance.job,
+            projectbuild__build_id=instance.build_id).first()
+        # TODO: This event handler should be split...
         if dependency:
             dependency.build = instance
             dependency.save()
+            projectbuild = dependency.projectbuild
+
+            build_statuses = ProjectBuildDependency.objects.filter(
+                projectbuild=dependency.projectbuild).values(
+                    "build__status", "build__phase")
+
+            statuses = set([x["build__status"] for x in build_statuses])
+            phases = set([x["build__phase"] for x in build_statuses])
+            updated = False
+            if len(statuses) == 1:
+                projectbuild.status = list(statuses)[0]
+                updated = True
+            if len(phases) == 1:
+                projectbuild.phase = list(phases)[0]
+                if projectbuild.phase == "FINISHED":
+                    projectbuild.ended_at = timezone.now()
+                updated = True
+            if updated:
+                projectbuild.save()

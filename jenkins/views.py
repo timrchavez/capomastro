@@ -4,8 +4,7 @@ import logging
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.views.generic import View, ListView, DetailView, TemplateView
-from braces.views import (
-    LoginRequiredMixin, PermissionRequiredMixin, CsrfExemptMixin)
+from braces.views import LoginRequiredMixin, CsrfExemptMixin
 
 from jenkins.models import JenkinsServer, Build, Job, JobType
 from jenkins.tasks import import_build
@@ -19,7 +18,7 @@ class NotificationHandlerView(CsrfExemptMixin, View):
         """
         Attempt to locate the remote server for this request.
         """
-        remote_addr=request.META["REMOTE_ADDR"]
+        remote_addr = request.META["REMOTE_ADDR"]
         try:
             return JenkinsServer.objects.get(remote_addr=remote_addr)
         except JenkinsServer.DoesNotExist:

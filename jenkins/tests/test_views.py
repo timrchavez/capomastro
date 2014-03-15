@@ -31,8 +31,8 @@ class NotificationHandlerTest(TestCase):
 
     def test_handle_notification_with_unknown_remote_addr(self):
         """
-        If we can't find the JenkinsServer using the remote_addr supplied in the
-        request we should get a 412 response and log this.
+        If we can't find the JenkinsServer using the remote_addr supplied in
+        the request we should get a 412 response and log this.
         """
         notification = {}
         with mock.patch("jenkins.views.logging") as mock_logging:
@@ -47,8 +47,8 @@ class NotificationHandlerTest(TestCase):
         If we can't find the job referred to in the notification, we should get
         a 404 response?
 
-        NOTE: The Jenkins notification plugin doesn't seem to care what response
-        we send back...
+        NOTE: The Jenkins notification plugin doesn't seem to care what
+        response we send back...
         """
         notification = {
             "name": "unknown job",
@@ -104,12 +104,12 @@ class NotificationHandlerTest(TestCase):
         """
         completed = {
             "build": {
-                 "number": 11,
-                 "phase": "COMPLETED",
-                 "status": "SUCCESS",
-                 "url": "job/mytestjob/11/"},
-                 "name": "mytestjob",
-                 "url": "job/mytestjob/"}
+                "number": 11,
+                "phase": "COMPLETED",
+                "status": "SUCCESS",
+                "url": "job/mytestjob/11/"},
+            "name": "mytestjob",
+            "url": "job/mytestjob/"}
         self._get_response_with_data(completed)
         self.assertEqual(0, Build.objects.count())
 
@@ -124,16 +124,15 @@ class NotificationHandlerTest(TestCase):
             phase="STARTED")
         finished = {
             "build": {
-                 "number": 11,
-                 "phase": "FINISHED",
-                 "status": "SUCCESS",
-                 "url": "job/mytestjob/11/"},
-                 "name": "mytestjob",
-                 "url": "job/mytestjob/"}
-
+                "number": 11,
+                "phase": "FINISHED",
+                "status": "SUCCESS",
+                "url": "job/mytestjob/11/"},
+            "name": "mytestjob",
+            "url": "job/mytestjob/"}
 
         with mock.patch("jenkins.views.import_build") as mock_import_build:
-            response = self._get_response_with_data(finished)
+            self._get_response_with_data(finished)
 
         build = Build.objects.get(job=self.job, number=11)
         self.assertEqual("SUCCESS", build.status)
@@ -149,15 +148,15 @@ class NotificationHandlerTest(TestCase):
         """
         finished = {
             "build": {
-                 "number": 20,
-                 "phase": "FINISHED",
-                 "status": "SUCCESS",
-                 "url": "job/mytestjob/20/"},
-                 "name": "mytestjob",
-                 "url": "job/mytestjob/"}
+                "number": 20,
+                "phase": "FINISHED",
+                "status": "SUCCESS",
+                "url": "job/mytestjob/20/"},
+            "name": "mytestjob",
+            "url": "job/mytestjob/"}
 
         with mock.patch("jenkins.views.import_build") as mock_import_build:
-            response = self._get_response_with_data(finished)
+            self._get_response_with_data(finished)
 
         build = Build.objects.get(job=self.job, number=20)
         self.assertEqual("SUCCESS", build.status)
@@ -173,16 +172,16 @@ class NotificationHandlerTest(TestCase):
         """
         finished = {
             "build": {
-                 "number": 20,
-                 "phase": "FINISHED",
-                 "status": "SUCCESS",
-                 "parameters": {"BUILD_ID": "20140312.2"},
-                 "url": "job/mytestjob/20/"},
-                 "name": "mytestjob",
-                 "url": "job/mytestjob/"}
+                "number": 20,
+                "phase": "FINISHED",
+                "status": "SUCCESS",
+                "parameters": {"BUILD_ID": "20140312.2"},
+                "url": "job/mytestjob/20/"},
+            "name": "mytestjob",
+            "url": "job/mytestjob/"}
 
         with mock.patch("jenkins.views.import_build") as mock_import_build:
-            response = self._get_response_with_data(finished)
+            self._get_response_with_data(finished)
 
         build = Build.objects.get(job=self.job, number=20)
         self.assertEqual("20140312.2", build.build_id)
@@ -260,7 +259,6 @@ class ServerJobBuildIndexTest(WebTest):
         self.assertEqual(server, response.context["server"])
         self.assertEqual(job, response.context["job"])
         self.assertEqual(set(builds), set(response.context["builds"]))
-
 
 
 class JobTypeDetailTest(WebTest):
