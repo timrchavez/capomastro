@@ -139,29 +139,7 @@ class ProjectBuildListTest(WebTest):
 
     def test_projectbuild_list_view(self):
         """
-        The detail view should render the server and jobs for the server.
-        """
-        job = JobFactory.create()
-        BuildFactory.create_batch(5, job=job)
-
-        project = ProjectFactory.create()
-
-        ProjectDependency.objects.create(
-            project=project, dependency=DependencyFactory.create(job=job))
-        projectbuild = ProjectBuildFactory.create(project=project)
-        BuildFactory.create(job=job, build_id=projectbuild.build_id)
-
-        url = reverse("project_projectbuild_list", kwargs={"pk": project.pk})
-        response = self.app.get(url, user="testing")
-
-        self.assertEqual(200, response.status_code)
-        self.assertEqual(
-            set([projectbuild]), set(response.context["projectbuilds"]))
-        self.assertEqual(project, response.context["project"])
-
-    def test_projectbuild_list_view(self):
-        """
-        The detail view should render the server and jobs for the server.
+        The list view should provide a list of projects.
         """
         job = JobFactory.create()
         BuildFactory.create_batch(5, job=job)
@@ -336,7 +314,7 @@ class InitiateProjectBuildTest(WebTest):
         [dep1, dep2, dep3] = DependencyFactory.create_batch(3)
         project = ProjectFactory.create()
         for dep in [dep1, dep2, dep3]:
-            dependency = ProjectDependency.objects.create(
+            ProjectDependency.objects.create(
                 project=project, dependency=dep)
         url = reverse(
             "project_initiate_projectbuild", kwargs={"pk": project.pk})
@@ -362,7 +340,7 @@ class InitiateProjectBuildTest(WebTest):
         [dep1, dep2, dep3] = DependencyFactory.create_batch(3)
         project = ProjectFactory.create()
         for dep in [dep1, dep2, dep3]:
-            dependency = ProjectDependency.objects.create(
+            ProjectDependency.objects.create(
                 project=project, dependency=dep)
         url = reverse(
             "project_initiate_projectbuild", kwargs={"pk": project.pk})

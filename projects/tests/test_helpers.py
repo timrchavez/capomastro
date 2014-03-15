@@ -48,7 +48,7 @@ class BuildProjectTest(TestCase):
             project=project, dependency=dependency)
 
         with mock.patch("projects.helpers.build_job") as mock_build_job:
-            new_build = build_project(project)
+            build_project(project)
 
         self.assertItemsEqual([], mock_build_job.call_args_list)
 
@@ -60,7 +60,7 @@ class BuildProjectTest(TestCase):
         [dep1, dep2, dep3] = DependencyFactory.create_batch(3)
         project = ProjectFactory.create()
         for dep in [dep1, dep2, dep3]:
-            dependency = ProjectDependency.objects.create(
+            ProjectDependency.objects.create(
                 project=project, dependency=dep)
 
         new_build = build_project(
