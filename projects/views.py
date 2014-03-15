@@ -170,6 +170,8 @@ class DependencyDetailView(LoginRequiredMixin, DetailView):
             DependencyDetailView, self).get_context_data(**kwargs)
         context["builds"] = Build.objects.filter(
             job=context["dependency"].job)
+        context["projects"] = Project.objects.filter(
+            dependencies=context["dependency"])
         return context
 
 
