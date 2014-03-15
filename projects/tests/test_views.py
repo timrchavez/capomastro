@@ -126,42 +126,6 @@ class ProjectCreateTest(WebTest):
         self.assertContains(response, "Project with this Name already exists.")
 
 
-class ProjectBuildTest(WebTest):
-
-    def setUp(self):
-        self.user = User.objects.create_user("testing")
-
-    def test_page_requires_authenticated_user(self):
-        """
-        """
-        # TODO: We should assert that requests without a logged in user
-        # get redirected to login.
-
-    def test_build_project_view(self):
-        """
-        The detail view should render the server and jobs for the server.
-        """
-        project = ProjectFactory.create()
-        ProjectDependency.objects.create(
-            project=project, dependency=DependencyFactory.create())
-        project_url = reverse("project_detail", kwargs={"pk": project.pk})
-
-        projectbuild = ProjectBuildFactory.create(project=project)
-        with mock.patch("projects.views.build_project") as mock_build_project:
-            mock_build_project.return_value = projectbuild
-            response = self.app.get(project_url, user="testing")
-            response = response.forms["build-project"].submit().follow()
-
-        mock_build_project.assert_called_once_with(project, user=self.user)
-        self.assertEqual(200, response.status_code)
-
-        self.assertEqual(
-            "Project Build %s" % projectbuild.build_id,
-            response.html.title.text)
-        self.assertContains(
-            response, "Build '%s' Queued." % projectbuild.build_id)
-
-
 class ProjectBuildListTest(WebTest):
 
     def setUp(self):
@@ -323,3 +287,88 @@ class DependencyCreateTest(WebTest):
 class DependencyDetailTest(WebTest):
 
     pass # TODO assert we get the projects and builds
+
+
+class InitiateProjectBuildTest(WebTest):
+
+    def setUp(self):
+        self.user = User.objects.create_superuser(
+            "testing", "testing@example.com", "password")
+
+    def test_page_requires_permission(self):
+        """
+        """
+        # TODO: We should assert that requests without the
+        # "projects.add_projectbuild" get redirected to login.
+
+    def test_project_build_form_selected_dependencies(self):
+        """
+        We expect all dependencies to be selected by default.
+        """
+        [dep1, dep2, dep3] = DependencyFactory.create_batch(3)
+        project = ProjectFactory.create()
+        for dep in [dep1, dep2, dep3]:
+            dependency = ProjectDependency.objects.create(
+                project=project, dependency=dep)
+        url = reverse(
+            "project_initiate_projectbuild", kwargs={"pk": project.pk})
+        response = self.app.get(url, user="testing")
+        form = response.forms["buildproject-form"]
+        # We expect all dependencies to be selected by default
+        self.assertEqual(
+            [str(x.pk) for x in [dep1, dep2, dep3]],
+            [x.value for x in form.fields["dependencies"]])
+
+    def test_project_build_form_builds_only_selected(self):
+        """
+        We expect all dependencies to be selected by default.
+        """
+        [dep1, dep2, dep3] = DependencyFactory.create_batch(3)
+        project = ProjectFactory.create()
+        for dep in [dep1, dep2, dep3]:
+            dependency = ProjectDependency.objects.create(
+                project=project, dependency=dep)
+        url = reverse(
+            "project_initiate_projectbuild", kwargs={"pk": project.pk})
+        response = self.app.get(url, user="testing")
+        form = response.forms["buildproject-form"]
+        # We expect all dependencies to be selected by default
+        self.assertEqual(
+            [str(x.pk) for x in [dep1, dep2, dep3]],
+            [x.value for x in form.fields["dependencies"]])
+
+
+# class ProjectBuildTest(WebTest):
+
+#     def setUp(self):
+#         self.user = User.objects.create_user("testing")
+
+#     def test_page_requires_authenticated_user(self):
+#         """
+#         """
+#         # TODO: We should assert that requests without a logged in user
+#         # get redirected to login.
+
+#     def test_build_project_view(self):
+#         """
+#         The detail view should render the server and jobs for the server.
+#         """
+#         project = ProjectFactory.create()
+#         ProjectDependency.objects.create(
+#             project=project, dependency=DependencyFactory.create())
+#         project_url = reverse("project_detail", kwargs={"pk": project.pk})
+
+#         projectbuild = ProjectBuildFactory.create(project=project)
+#         with mock.patch("projects.views.build_project") as mock_build_project:
+#             mock_build_project.return_value = projectbuild
+#             response = self.app.get(project_url, user="testing")
+#             response = response.forms["build-project"].submit().follow()
+
+#         mock_build_project.assert_called_once_with(project, user=self.user)
+#         self.assertEqual(200, response.status_code)
+
+#         self.assertEqual(
+#             "Project Build %s" % projectbuild.build_id,
+#             response.html.title.text)
+#         self.assertContains(
+#             response, "Build '%s' Queued." % projectbuild.build_id)

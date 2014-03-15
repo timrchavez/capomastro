@@ -49,7 +49,25 @@ class BuildProjectTest(TestCase):
 
         with mock.patch("projects.helpers.build_job") as mock_build_job:
             new_build = build_project(project)
-            self.assertIsInstance(new_build, ProjectBuild)
 
-        self.assertIsNotNone(new_build.requested_at)
         self.assertItemsEqual([], mock_build_job.call_args_list)
+
+    def test_build_project_with_specified_dependencies(self):
+        """
+        If a list of dependencies is provided, then we should only build those
+        dependencies.
+        """
+        [dep1, dep2, dep3] = DependencyFactory.create_batch(3)
+        project = ProjectFactory.create()
+        for dep in [dep1, dep2, dep3]:
+            dependency = ProjectDependency.objects.create(
+                project=project, dependency=dep)
+
+        new_build = build_project(project, dependencies=[dep1, dep2])
+
+        projectbuild_dependencies = ProjectBuildDependency.objects.filter(
+            projectbuild=new_build)
+        self.assertEqual(2, projectbuild_dependencies.all().count())
+        self.assertEqual(
+            set([dep1, dep2]),
+            set([x.dependency for x in projectbuild_dependencies.all()]))

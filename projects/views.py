@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
-from django.views.generic import CreateView, ListView, DetailView, View
+from django.views.generic import (
+    CreateView, ListView, DetailView, View, FormView)
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
@@ -11,7 +12,7 @@ from jenkins.models import Build
 from projects.models import (
     Project, Dependency, ProjectDependency, ProjectBuild,
     ProjectBuildDependency)
-from projects.forms import ProjectForm, DependencyForm
+from projects.forms import ProjectForm, DependencyForm, ProjectBuildForm
 from projects.helpers import build_project
 
 
@@ -33,21 +34,35 @@ class ProjectListView(LoginRequiredMixin, ListView):
     model = Project
 
 
-class InitiateProjectBuildView(LoginRequiredMixin, View):
+class InitiateProjectBuildView(LoginRequiredMixin, FormView):
     """
     Starts building a project and redirects to the newly created ProjectBuild.
     """
+    form_class = ProjectBuildForm
+    template_name = "projects/projectbuild_form.html"
 
-    def post(self, request, pk):
-        project = Project.objects.get(pk=pk)
-        projectbuild = build_project(project, user=request.user)
-        messages.add_message(
-            request, messages.INFO,
-            "Build '%s' Queued." % projectbuild.build_id)
+    def get_form(self, form_class):
+        """
+        Returns an instance of the form to be used in this view.
+        """
+        project = get_object_or_404(Project, pk=self.kwargs["pk"])
+        form = form_class(**self.get_form_kwargs())
+        dependencies = project.dependencies
+        form.fields["dependencies"].queryset = dependencies
+        form.fields["dependencies"].initial = [x.pk for x in dependencies.all()]
+        return form
 
-        url_args = {"project_pk": project.pk, "build_pk": projectbuild.pk}
-        url = reverse("project_projectbuild_detail", kwargs=url_args)
-        return HttpResponseRedirect(url)
+    def form_valid(self, form):
+        pass
+        # project = Project.objects.get(pk=pk)
+        # projectbuild = build_project(project, user=request.user)
+        # messages.add_message(
+        #     request, messages.INFO,
+        #     "Build '%s' Queued." % projectbuild.build_id)
+
+        # url_args = {"project_pk": project.pk, "build_pk": projectbuild.pk}
+        # url = reverse("project_projectbuild_detail", kwargs=url_args)
+        # return HttpResponseRedirect(url)
 
 
 class ProjectBuildListView(LoginRequiredMixin, ListView):

@@ -84,6 +84,9 @@ class ProjectBuildDependency(models.Model):
     class Meta:
         verbose_name_plural = "project build dependencies"
 
+    def __str__(self):
+        return self.dependency.name
+
 
 class ProjectBuild(models.Model):
     """Represents a requested build of a Project."""

@@ -1,7 +1,8 @@
 from django import forms
 
 from jenkins.models import JenkinsServer, JobType
-from projects.models import Project, Dependency, ProjectDependency
+from projects.models import (
+    Project, Dependency, ProjectDependency, ProjectBuild)
 from jenkins.helpers import create_job
 from jenkins.tasks import push_job_to_jenkins
 
@@ -48,3 +49,8 @@ class DependencyForm(forms.ModelForm):
         dependency.job = job
         dependency.save()
         return dependency
+
+class ProjectBuildForm(forms.Form):
+
+    dependencies = forms.ModelMultipleChoiceField(Dependency.objects,
+        required=True, widget=forms.CheckboxSelectMultiple)
