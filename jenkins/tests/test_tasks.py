@@ -5,9 +5,10 @@ from django.test.utils import override_settings
 
 import mock
 
-from jenkins.tasks import build_job
+from jenkins.tasks import build_job, push_job_to_jenkins
 from jenkins.models import JenkinsServer
-from .factories import JobFactory, JenkinsServerFactory, BuildFactory
+from .factories import (
+    JobFactory, JenkinsServerFactory, BuildFactory, JobTypeFactory)
 
 
 class BuildJobTaskTest(TestCase):
@@ -46,5 +47,33 @@ class BuildJobTaskTest(TestCase):
 
 
 class ImportBuildTaskTest(TestCase):
-    pass
     # TODO: This needs written...
+    pass
+
+
+job_xml = """
+<?xml version='1.0' encoding='UTF-8'?>
+<project>{{ notifications_url }}</project>
+"""
+
+
+class CreateJobTaskTest(TestCase):
+
+    @override_settings(CELERY_ALWAYS_EAGER=True)
+    def test_push_job_to_jenkins(self):
+        """
+        The push_job_to_jenkins task should find the associated server, and
+        create the job with the right name and content.
+        """
+        jobtype = JobTypeFactory.create(config_xml=job_xml)
+        job = JobFactory.create(jobtype=jobtype, name="testing")
+        with mock.patch("jenkins.models.Jenkins", spec=True) as mock_jenkins:
+            push_job_to_jenkins(job.pk)
+
+        mock_jenkins.assert_called_with(
+            job.server.url, username=u"root", password=u"testing")
+        mock_jenkins.return_value.create_job.assert_called_with(
+            "testing",
+            job_xml.replace(
+                "{{ notifications_url }}",
+                "http://localhost/jenkins/notifications/"))

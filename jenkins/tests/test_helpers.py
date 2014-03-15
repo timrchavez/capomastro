@@ -1,13 +1,14 @@
 import logging
 
-from django.test import TestCase
+from django.test import TestCase, SimpleTestCase
 
 import mock
 import jenkinsapi.job
 
-from jenkins.helpers import import_build_for_job
-from jenkins.models import Build
-from .factories import JobFactory, BuildFactory
+from jenkins.helpers import import_build_for_job, create_job
+from jenkins.models import Build, Job
+from .factories import (
+    JobFactory, BuildFactory, JobTypeFactory, JenkinsServerFactory)
 
 
 class ImportBuildForJobTest(TestCase):
@@ -38,10 +39,28 @@ class ImportBuildForJobTest(TestCase):
             job.server.url, username=u"root", password=u"testing")
 
         mock_logging.assert_has_calls(
-            [mock.call.info("Located job testjob%d\n" % job.pk),
-             mock.call.info("Using server at http://www%d.example.com/\n" % job.server.pk),
+            [mock.call.info("Located job %s\n" % job),
+             mock.call.info("Using server at %s\n" % job.server.url),
              mock.call.info("{'status': 'SUCCESS', 'duration': 1000, 'url': 'http://localhost/123'}")])
 
         build = Build.objects.get(pk=build.pk)
         self.assertEqual(1000, build.duration)
         self.assertEqual("SUCCESS", build.status)
+
+
+class CreateJobTest(TestCase):
+
+    def test_create_job(self):
+        """
+        Create job should instantiate a job associated with a server generate a
+        name for the job.
+        """
+        jobtype = JobTypeFactory.create()
+        server = JenkinsServerFactory.create()
+
+        with mock.patch("jenkins.helpers.generate_job_name") as mock_name:
+            mock_name.return_value = "known name"
+            create_job(jobtype, server)
+
+        job = Job.objects.get(jobtype=jobtype, server=server)
+        self.assertEqual("known name", job.name)

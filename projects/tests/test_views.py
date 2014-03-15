@@ -1,17 +1,14 @@
-import json
-
-from django.test import TestCase
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 
 from django_webtest import WebTest
 import mock
 
-from projects.models import ProjectDependency, Project, ProjectBuild
+from projects.models import ProjectDependency, Project
 from .factories import (
-    ProjectFactory, DependencyFactory, ProjectBuildFactory,
-    DependencyTypeFactory)
-from jenkins.tests.factories import BuildFactory, JobFactory
+    ProjectFactory, DependencyFactory, ProjectBuildFactory)
+from jenkins.tests.factories import (
+    BuildFactory, JobFactory, JobTypeFactory, JenkinsServerFactory)
 
 # TODO Introduce subclass of WebTest that allows easy assertions that a page
 # requires various permissions...
@@ -108,7 +105,7 @@ class ProjectCreateTest(WebTest):
         """
         The project name should be unique.
         """
-        project = ProjectFactory.create(name="My Project")
+        ProjectFactory.create(name="My Project")
 
         project_url = reverse("project_create")
         response = self.app.get(project_url, user="testing")
@@ -137,7 +134,7 @@ class ProjectBuildViewTest(WebTest):
         The detail view should render the server and jobs for the server.
         """
         project = ProjectFactory.create()
-        dependency = ProjectDependency.objects.create(
+        ProjectDependency.objects.create(
             project=project, dependency=DependencyFactory.create())
         project_url = reverse("project_detail", kwargs={"pk": project.pk})
 
@@ -177,10 +174,10 @@ class ProjectBuildListViewTest(WebTest):
 
         project = ProjectFactory.create()
 
-        dependency = ProjectDependency.objects.create(
+        ProjectDependency.objects.create(
             project=project, dependency=DependencyFactory.create(job=job))
         projectbuild = ProjectBuildFactory.create(project=project)
-        builds = BuildFactory.create(job=job, build_id=projectbuild.build_id)
+        BuildFactory.create(job=job, build_id=projectbuild.build_id)
 
         url = reverse("project_projectbuild_list", kwargs={"pk": project.pk})
         response = self.app.get(url, user="testing")
@@ -190,6 +187,27 @@ class ProjectBuildListViewTest(WebTest):
             set([projectbuild]), set(response.context["projectbuilds"]))
         self.assertEqual(project, response.context["project"])
 
+    def test_projectbuild_list_view(self):
+        """
+        The detail view should render the server and jobs for the server.
+        """
+        job = JobFactory.create()
+        BuildFactory.create_batch(5, job=job)
+
+        project = ProjectFactory.create()
+
+        ProjectDependency.objects.create(
+            project=project, dependency=DependencyFactory.create(job=job))
+        projectbuild = ProjectBuildFactory.create(project=project)
+        BuildFactory.create(job=job, build_id=projectbuild.build_id)
+
+        url = reverse("project_projectbuild_list", kwargs={"pk": project.pk})
+        response = self.app.get(url, user="testing")
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(
+            set([projectbuild]), set(response.context["projectbuilds"]))
+        self.assertEqual(project, response.context["project"])
 
 
 class DependencyListViewTest(WebTest):
@@ -216,39 +234,36 @@ class DependencyListViewTest(WebTest):
         self.assertEqual(
             set(dependencies), set(response.context["dependencies"]))
 
-        response = response.click(dependencies[0].dependency_type.name)
+        response = response.click(dependencies[0].job.jobtype.name)
         self.assertEqual(
-             dependencies[0].dependency_type.name, response.html.title.text)
+            dependencies[0].job.jobtype.name, response.html.title.text)
 
 
-class DependencyTypeDetailTest(WebTest):
+class DependencyCreateTest(WebTest):
 
     def setUp(self):
-        self.user = User.objects.create_user("testing")
-
-    def test_page_requires_authenticated_user(self):
-        """
-        """
-        # TODO: We should assert that requests without a logged in user
-        # get redirected to login.
-
-    def test_dependency_type_detail(self):
-        """
-        The detail view should render the dependency type name, description and
-        the job xml.
-        """
-        dependencytype = DependencyTypeFactory.create(
+        self.user = User.objects.create_superuser(
+            "testing", "testing@example.com", "password")
+        self.jobtype = JobTypeFactory.create(
             config_xml="this is the job xml")
-        dependencytype_url = reverse(
-            "dependencytype_detail", kwargs={"pk": dependencytype.pk})
-        response = self.app.get(dependencytype_url, user="testing")
+        self.server = JenkinsServerFactory.create()
 
-        self.assertEqual(200, response.status_code)
-        self.assertEqual(
-            dependencytype, response.context["dependencytype"])
+    def test_page_requires_permission(self):
+        """
+        """
+        # TODO: We should assert that requests without the
+        # "projects.add_dependency" get redirected to login.
 
-        self.assertContains(
-            response, "<code>this is the job xml</code>", html=True)
-        self.assertContains(response, dependencytype.name)
-        self.assertContains(response, dependencytype.description)
+    def test_create_dependency(self):
+        """
+        We can create dependencies with jobs in servers.
+        """
+        project_url = reverse("dependency_create")
+        response = self.app.get(project_url, user="testing")
 
+        form = response.forms["dependency-form"]
+        form["job_type"].select(self.jobtype.pk)
+        form["server"].select(self.server.pk)
+        form["name"].value = "My Dependency"
+
+        response = form.submit().follow()

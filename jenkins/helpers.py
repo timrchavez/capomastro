@@ -1,13 +1,16 @@
 import logging
 
+from django.conf import settings
+
 from jenkins.models import Job, Build, Artifact
+from jenkins.utils import generate_job_name
 
 
-def import_build_for_job(job_id, build_number):
+def import_build_for_job(job_pk, build_number):
     """
     Import a build for a job.
     """
-    job = Job.objects.get(pk=job_id)
+    job = Job.objects.get(pk=job_pk)
     logging.info("Located job %s\n" % job)
 
     client = job.server.get_client()
@@ -37,13 +40,22 @@ def import_build_for_job(job_id, build_number):
         Artifact.objects.create(**artifact_details)
 
 
-def import_builds_for_job(job_id):
+def create_job(jobtype, server):
     """
-    Import all Builds for a job using the job_id.
+    Create a job in the given Jenkins Server.
+    """
+    name = generate_job_name(jobtype)
+    job = Job.objects.create(jobtype=jobtype, server=server, name=name)
+    return job
+
+
+def import_builds_for_job(job_pk):
+    """
+    Import all Builds for a job using the job_pk.
 
     TODO: Add testing - only used by command-line tool just now.
     """
-    job = Job.objects.get(pk=job_id)
+    job = Job.objects.get(pk=job_pk)
 
     logging.info("Located job %s\n" % job)
 

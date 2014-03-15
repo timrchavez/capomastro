@@ -22,10 +22,27 @@ class JenkinsServer(models.Model):
             self.url, username=self.username, password=self.password)
 
 
+class JobType(models.Model):
+    """
+    Used as a model for creating new Jenkins jobs.
+    """
+
+    name = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    config_xml = models.TextField()
+
+    def __str__(self):
+        return self.name
+
+
 class Job(models.Model):
 
     server = models.ForeignKey(JenkinsServer)
-    name = models.CharField(max_length=255, blank=True)
+    jobtype = models.ForeignKey(JobType)
+    name = models.CharField(max_length=255)
+
+    class Meta:
+        unique_together = "server", "name"
 
     def __str__(self):
         return self.name
