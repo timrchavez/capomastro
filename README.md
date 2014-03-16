@@ -1,7 +1,11 @@
 wooster
 =======
-
 Jenkins best friend...soon to become Leeroy.
+
+Wooster manages build dependencies built using Jenkins.
+
+Multiple "Projects" can share common dependencies, and the artifact details are
+pulled into the database where they can easily be download, or archived.
 
 To get started...
 
@@ -29,11 +33,6 @@ $ celery -A wooster worker -l info
 
 5. You'll need an initial jenkins.JenkinsServer object, with the correct credentials,
    and the REMOTE_ADDR setup correctly, so that it can receive callbacks.
-
-6. Create a jenkins.Job object associated with your JenkinsServer, and with the
-   same name as a job in your existing JenkinsServer.
-
-   Creating jobs is coming soon.
 
 7. Create a DependencyType, and Dependency for that DependencyType, the
    Dependency should be hooked up to your Job model.

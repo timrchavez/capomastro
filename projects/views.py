@@ -9,6 +9,7 @@ from braces.views import (
     LoginRequiredMixin, PermissionRequiredMixin, FormValidMessageMixin)
 
 from jenkins.models import Build
+from jenkins.tasks import build_job
 from projects.models import (
     Project, Dependency, ProjectDependency, ProjectBuild,
     ProjectBuildDependency)
@@ -60,8 +61,8 @@ class InitiateProjectBuildView(LoginRequiredMixin, FormView):
             project, user=self.request.user,
             dependencies=form.cleaned_data["dependencies"])
         messages.add_message(
-           self.request, messages.INFO,
-           "Build '%s' Queued." % projectbuild.build_id)
+            self.request, messages.INFO,
+            "Build '%s' queued." % projectbuild.build_id)
 
         url_args = {"project_pk": project.pk, "build_pk": projectbuild.pk}
         url = reverse("project_projectbuild_detail", kwargs=url_args)
@@ -173,6 +174,17 @@ class DependencyDetailView(LoginRequiredMixin, DetailView):
         context["projects"] = Project.objects.filter(
             dependencies=context["dependency"])
         return context
+
+    def post(self, request, pk):
+        """
+        """
+        dependency = get_object_or_404(Dependency, pk=pk)
+        build_job.delay(dependency.job.pk)
+        messages.add_message(
+            self.request, messages.INFO,
+            "Build for '%s' queued." % dependency.name)
+        url = reverse("dependency_detail", kwargs={"pk": dependency.pk})
+        return HttpResponseRedirect(url)
 
 
 __all__ = [

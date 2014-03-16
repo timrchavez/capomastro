@@ -264,7 +264,45 @@ class DependencyCreateTest(WebTest):
 
 class DependencyDetailTest(WebTest):
 
-    pass # TODO assert we get the projects and builds
+    def setUp(self):
+        self.user = User.objects.create_superuser(
+            "testing", "testing@example.com", "password")
+
+    def test_dependency_detail(self):
+        """
+        The dependency detail page should show recent builds, and associated
+        projects.
+        """
+        dependency = DependencyFactory.create()
+        project = ProjectFactory.create()
+        ProjectDependency.objects.create(
+            project=project, dependency=dependency)
+        url = reverse("dependency_detail", kwargs={"pk": dependency.pk})
+        response = self.app.get(url, user="testing")
+
+        self.assertEqual(dependency, response.context["dependency"])
+        self.assertEqual([project], list(response.context["projects"]))
+
+    def test_dependency_build(self):
+        """
+        It's possible to request a build of a dependency from the dependendency
+        detail page.
+        """
+        dependency = DependencyFactory.create()
+        project = ProjectFactory.create()
+        ProjectDependency.objects.create(
+            project=project, dependency=dependency)
+        url = reverse("dependency_detail", kwargs={"pk": dependency.pk})
+        response = self.app.get(url, user="testing")
+
+        with mock.patch("projects.views.build_job") as build_job_mock:
+            response = response.forms["build-dependency"].submit().follow()
+
+        self.assertEqual(dependency, response.context["dependency"])
+        self.assertEqual([project], list(response.context["projects"]))
+        self.assertContains(
+            response, "Build for '%s' queued." % dependency.name)
+        build_job_mock.delay.assert_called_once_with(dependency.job.pk)
 
 
 class InitiateProjectBuildTest(WebTest):
@@ -306,6 +344,8 @@ class InitiateProjectBuildTest(WebTest):
             mock.call(dep1.job.pk, projectbuild.build_id),
             mock.call(dep2.job.pk, projectbuild.build_id),
             mock.call(dep3.job.pk, projectbuild.build_id)])
+        self.assertContains(
+            response, "Build '%s' queued." % projectbuild.build_id)
 
     def test_project_build_form_builds_only_selected(self):
         """
