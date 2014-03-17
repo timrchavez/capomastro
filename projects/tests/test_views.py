@@ -186,7 +186,7 @@ class ProjectBuildDetailTest(WebTest):
 
         url = reverse(
             "project_projectbuild_detail",
-            kwargs={"project_pk": project.pk, "build_pk": build.pk})
+            kwargs={"project_pk": project.pk, "build_pk": projectbuild.pk})
         response = self.app.get(url, user="testing")
 
         dependencies = ProjectBuildDependency.objects.filter(

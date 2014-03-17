@@ -5,10 +5,11 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 from jenkins.models import Job, Build, Artifact
+from archives.models import TRANSPORTS, POLICIES
 
 
 # Signals
-project_build_finished = Signal(providing_args=["projectbuild"])
+projectbuild_finished = Signal(providing_args=["projectbuild"])
 
 
 class Dependency(models.Model):
@@ -117,6 +118,15 @@ class ProjectBuild(models.Model):
         """
         return Artifact.objects.filter(build__build_id=self.build_id)
 
+    def get_archiver(self, archive_target):
+        """
+        Passed an Archive, returns a contructed Archiver.
+        """
+        policy = POLICIES[archive_target.policy](self)
+        archiver = TRANSPORTS[archive_target.transport](
+            policy, archive_target)
+        return archiver
+
     def save(self, **kwargs):
         if not self.pk:
             self.build_id = generate_projectbuild_id(self)
@@ -182,8 +192,8 @@ def handle_builds_for_projectbuild(sender, created, instance, **kwargs):
                 projectbuild.phase = list(phases)[0]
                 if projectbuild.phase == "FINISHED":
                     projectbuild.ended_at = timezone.now()
-                    project_build_finished.send(
+                    projectbuild.save()
+                    projectbuild_finished.send(
                         sender=ProjectBuild, projectbuild=projectbuild)
-                updated = True
             if updated:
                 projectbuild.save()

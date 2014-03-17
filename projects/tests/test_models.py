@@ -5,7 +5,7 @@ from django.dispatch import receiver
 
 from projects.models import (
     Dependency, ProjectDependency, ProjectBuild, generate_projectbuild_id,
-    ProjectBuildDependency, project_build_finished)
+    ProjectBuildDependency, projectbuild_finished)
 from .factories import (
     ProjectFactory, DependencyFactory, ProjectBuildFactory)
 from jenkins.tests.factories import JobFactory, BuildFactory, ArtifactFactory
@@ -215,7 +215,7 @@ class ProjectBuildTest(TestCase):
         """
         When we set the projectbuild status to finished, we should signal this.
         """
-        @receiver(project_build_finished, sender=ProjectBuild)
+        @receiver(projectbuild_finished, sender=ProjectBuild)
         def handle_signal(sender, projectbuild, **kwargs):
             self.projectbuild = projectbuild
 

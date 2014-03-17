@@ -31,6 +31,8 @@ INSTALLED_APPS = (
 
     'jenkins',
     'projects',
+    'credentials',
+    'archives',
     'wooster.site'
 )
 
