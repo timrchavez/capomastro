@@ -1,10 +1,11 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.dispatch import receiver
 
 from projects.models import (
     Dependency, ProjectDependency, ProjectBuild, generate_projectbuild_id,
-    ProjectBuildDependency)
+    ProjectBuildDependency, project_build_finished)
 from .factories import (
     ProjectFactory, DependencyFactory, ProjectBuildFactory)
 from jenkins.tests.factories import JobFactory, BuildFactory, ArtifactFactory
@@ -209,3 +210,29 @@ class ProjectBuildTest(TestCase):
         self.assertEqual("SUCCESS", projectbuild.status)
         self.assertEqual("FINISHED", projectbuild.phase)
         self.assertIsNotNone(projectbuild.ended_at)
+
+    def test_project_build_sends_finished_signal(self):
+        """
+        When we set the projectbuild status to finished, we should signal this.
+        """
+        @receiver(project_build_finished, sender=ProjectBuild)
+        def handle_signal(sender, projectbuild, **kwargs):
+            self.projectbuild = projectbuild
+
+        project = ProjectFactory.create()
+        dependency1 = DependencyFactory.create()
+        ProjectDependency.objects.create(
+            project=project, dependency=dependency1)
+
+        dependency2 = DependencyFactory.create()
+        ProjectDependency.objects.create(
+            project=project, dependency=dependency2)
+
+        from projects.helpers import build_project
+        projectbuild = build_project(project, queue_build=False)
+
+        for job in [dependency1.job, dependency2.job]:
+            BuildFactory.create(
+                job=job, build_id=projectbuild.build_id, phase="FINISHED")
+
+        self.assertEqual(projectbuild, self.projectbuild)

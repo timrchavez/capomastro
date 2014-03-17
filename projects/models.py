@@ -1,10 +1,14 @@
 from django.db import models
 from django.db.models.signals import post_save
-from django.dispatch import receiver
+from django.dispatch import receiver, Signal
 from django.contrib.auth.models import User
 from django.utils import timezone
 
 from jenkins.models import Job, Build, Artifact
+
+
+# Signals
+project_build_finished = Signal(providing_args=["projectbuild"])
 
 
 class Dependency(models.Model):
@@ -154,6 +158,11 @@ def handle_builds_for_projectbuild(sender, created, instance, **kwargs):
             dependency__job=instance.job,
             projectbuild__build_id=instance.build_id).first()
         # TODO: This event handler should be split...
+        # This is a possible race-condition, if we have multiple dependencies
+        # being processed at the same time, then we could miss the status of
+        # one.
+        #
+        # Splitting it into a task would rule out using events tho'.
         if dependency:
             dependency.build = instance
             dependency.save()
@@ -173,6 +182,8 @@ def handle_builds_for_projectbuild(sender, created, instance, **kwargs):
                 projectbuild.phase = list(phases)[0]
                 if projectbuild.phase == "FINISHED":
                     projectbuild.ended_at = timezone.now()
+                    project_build_finished.send(
+                        sender=ProjectBuild, projectbuild=projectbuild)
                 updated = True
             if updated:
                 projectbuild.save()
