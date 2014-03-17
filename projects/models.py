@@ -55,6 +55,10 @@ class ProjectDependency(models.Model):
     class Meta:
         verbose_name_plural = "project dependencies"
 
+    def __str__(self):
+        return "{0} dependency for {1} {2}".format(
+            self.dependency, self.project, self.auto_track)
+
 
 class Project(models.Model):
 
@@ -90,7 +94,8 @@ class ProjectBuildDependency(models.Model):
         verbose_name_plural = "project build dependencies"
 
     def __str__(self):
-        return self.dependency.name
+        return "Build of {0} for {1}".format(
+            self.dependency.name, self.projectbuild.build_id)
 
 
 class ProjectBuild(models.Model):
