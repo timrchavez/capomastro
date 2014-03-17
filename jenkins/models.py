@@ -11,7 +11,7 @@ class JenkinsServer(models.Model):
     password = models.CharField(max_length=255)
     remote_addr = models.CharField(
         max_length=255,
-        help_text="The IP address that requests ",
+        help_text="The IP address that requests "
         "from the jenkins server come in on.")
 
     def __str__(self):
