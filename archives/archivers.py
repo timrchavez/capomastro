@@ -1,3 +1,4 @@
+import os
 import urllib2
 from time import sleep
 from paramiko import SSHClient, WarningPolicy
@@ -98,10 +99,10 @@ class SshArchiver(Archiver):
         Uploads the artifact_url to the destination on
         the remote server, underneath the target's basedir.
         """
-        destination = "%s/%s" % (self.target.basedir, destination)
+        destination = os.path.join(self.target.basedir, destination)
         _, stdout, _ = self.ssh_client.exec_command(
             "mkdir -p `dirname %s`" % destination)
-        while not stdout.channel.exit_status_ready():
-            sleep(0.1)
+        # TODO: raise exception if the command fails
+        _ = stdout.channel.recv_exit_status()
         artifact = urllib2.urlopen(artifact_url)
         self.sftp_client.stream_file_to_remote(artifact, destination)
