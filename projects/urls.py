@@ -6,6 +6,8 @@ from projects.views import *
 urlpatterns = patterns("",
     url(r"^projects/$", ProjectListView.as_view(), name="project_list"),
     url(r"^projects/(?P<pk>\d+)/$", ProjectDetailView.as_view(), name="project_detail"),
+    url(r"^projects/(?P<pk>\d+)/dependencies/$", ProjectDependenciesView.as_view(), name="project_dependencies"),
+    url(r"^projects/(?P<pk>\d+)/edit/$", ProjectUpdateView.as_view(), name="project_update"),
     url(r"^projects/(?P<pk>\d+)/build/$", InitiateProjectBuildView.as_view(), name="project_initiate_projectbuild"),
     url(r"^projects/(?P<pk>\d+)/builds/$", ProjectBuildListView.as_view(), name="project_projectbuild_list"),
     url(r"^projects/(?P<project_pk>\d+)/builds/(?P<build_pk>\d+)/$", ProjectBuildDetailView.as_view(), name="project_projectbuild_detail"),

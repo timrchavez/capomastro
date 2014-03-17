@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.views.generic import (
-    CreateView, ListView, DetailView, FormView)
+    CreateView, ListView, DetailView, FormView, UpdateView)
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
@@ -33,6 +33,19 @@ class ProjectCreateView(
 class ProjectListView(LoginRequiredMixin, ListView):
 
     model = Project
+
+
+class ProjectUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, FormValidMessageMixin,
+        UpdateView):
+
+    permission_required = "projects.change_project"
+    form_valid_message = "Project updated"
+    model = Project
+    form_class = ProjectForm
+
+    def get_success_url(self):
+        return reverse("project_detail", kwargs={"pk": self.object.pk})
 
 
 class InitiateProjectBuildView(LoginRequiredMixin, FormView):
@@ -187,8 +200,34 @@ class DependencyDetailView(LoginRequiredMixin, DetailView):
         return HttpResponseRedirect(url)
 
 
+class ProjectDependenciesView(LoginRequiredMixin, DetailView):
+
+    model = Project
+    context_object_name = "project"
+    template_name = "projects/project_dependencies.html"
+
+    def _get_builds_for_dependency(self, projectdependency):
+        """
+        Return the builds for a project dependency.
+        """
+        return Build.objects.filter(job=projectdependency.dependency.job)
+
+    def get_context_data(self, **kwargs):
+        """
+        Supplement the project with its dependencies.
+        """
+        context = super(
+            ProjectDependenciesView, self).get_context_data(**kwargs)
+        dependencies_status = []
+        dependencies = ProjectDependency.objects.filter(
+            project=context["project"])
+        context["dependencies"] = dependencies
+        return context
+
+
 __all__ = [
     "ProjectCreateView", "ProjectListView", "ProjectDetailView",
     "DependencyCreateView", "InitiateProjectBuildView", "ProjectBuildListView",
-    "ProjectBuildDetailView", "DependencyListView", "DependencyDetailView"
+    "ProjectBuildDetailView", "DependencyListView", "DependencyDetailView",
+    "ProjectUpdateView", "ProjectDependenciesView"
 ]

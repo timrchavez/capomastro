@@ -394,3 +394,71 @@ class InitiateProjectBuildTest(WebTest):
 
         self.assertContains(response, "Must select at least one dependency.")
         self.assertEqual([], build_job_mock.delay.mock_calls)
+
+
+#class ProjectUpdateTest(WebTest):
+#
+#    def setUp(self):
+#        self.user = User.objects.create_user("testing")
+#
+#    def test_page_requires_authenticated_user(self):
+#        """
+#        """
+#        # TODO: We should assert that requests without a logged in user
+#        # get redirected to login.
+#
+#    def test_project_update(self):
+#        """
+#        The update view should allow us to change the auto track status of the
+#        dependencies and add additional dependencies.
+#        """
+#        project = ProjectFactory.create()
+#        # TODO: Work out how to configure DjangoFactory to setup m2m through
+#        dependency = ProjectDependency.objects.create(
+#            project=project, dependency=DependencyFactory.create())
+#        # TODO: It'd be nice if this was driven by ProjectBuildFactory.
+#        projectbuilds = [
+#            build_project(project, queue_build=False) for x in range(6)]
+#
+#        project_url = reverse("project_detail", kwargs={"pk": project.pk})
+#        response = self.app.get(project_url, user="testing")
+#        self.assertEqual(200, response.status_code)
+#        self.assertEqual(project, response.context["project"])
+#        self.assertEqual([dependency], list(response.context["dependencies"]))
+#        self.assertEqual(
+#            projectbuilds[:5], list(response.context["projectbuilds"]))
+#
+#
+
+
+class ProjectDependenciesTest(WebTest):
+
+    def setUp(self):
+        self.user = User.objects.create_user("testing")
+
+    def test_page_requires_authenticated_user(self):
+        """
+        """
+        # TODO: We should assert that requests without a logged in user
+        # get redirected to login.
+
+    def test_project_dependencies(self):
+        """
+        Project Dependencies view should show all dependencies and the status of
+        their build.
+        """
+        project = ProjectFactory.create()
+        dependency = DependencyFactory.create()
+        builds = BuildFactory.create_batch(5, job=dependency.job)
+        projectdependency = ProjectDependency.objects.create(
+            project=project, dependency=dependency, auto_track=False,
+            current_build=builds[-1])
+
+        project_url = reverse("project_dependencies", kwargs={"pk": project.pk})
+        response = self.app.get(project_url, user="testing")
+        self.assertEqual(200, response.status_code)
+        self.assertEqual(project, response.context["project"])
+
+        self.assertEqual(
+            [projectdependency],
+            list(response.context["dependencies"]))
