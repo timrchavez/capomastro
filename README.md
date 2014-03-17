@@ -22,7 +22,7 @@ http://localhost:8000/admin/ login and continue.
 I'd recommend installing gunicorn, but you can use the default ./manage.py
 runserver.
 
-You'll need a celery worker running...
+You'll need a celery worker running as well as rabbitmq.
 
 $ gunicorn -b 0.0.0.0:8000 wooster.wsgi:application
 $ celery -A wooster worker -l info
