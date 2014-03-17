@@ -21,7 +21,6 @@
         {% for dependency in dependencies %}
         <tr>
           <td><a href="{% url 'dependency_detail' pk=dependency.pk %}">{{ dependency.name }}</a></td>
-          <!-- TODO: This should probably link to the Job in the jenkins app -->
           <td><a href="{% url 'jobtype_detail' pk=dependency.job.jobtype.pk %}">{{ dependency.job.jobtype.name }}</a></td>
           <td>{{ dependency.description|default:"No description" }}</td>
           <td>{{ dependency.job.name }}</td>
