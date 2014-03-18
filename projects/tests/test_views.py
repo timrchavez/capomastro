@@ -460,5 +460,5 @@ class ProjectDependenciesTest(WebTest):
         self.assertEqual(project, response.context["project"])
 
         self.assertEqual(
-            [projectdependency],
-            list(response.context["dependencies"]))
+            [dependency],
+            list(response.context["builds_header"]))
