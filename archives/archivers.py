@@ -18,6 +18,7 @@ class Archiver(object):
         """
         Initialize the archiving.
         """
+        print "START"
 
     def end(self):
         """
