@@ -15,6 +15,7 @@ from projects.models import (
     ProjectBuildDependency)
 from projects.forms import ProjectForm, DependencyForm, ProjectBuildForm
 from projects.helpers import build_project
+from projects.utils import get_build_table_for_project
 
 
 class ProjectCreateView(
@@ -221,7 +222,9 @@ class ProjectDependenciesView(LoginRequiredMixin, DetailView):
         dependencies_status = []
         dependencies = ProjectDependency.objects.filter(
             project=context["project"])
-        context["dependencies"] = dependencies
+        header, table =  get_build_table_for_project(context["project"])
+        context["builds_header"] = header
+        context["builds_table"] = table
         return context
 
 
