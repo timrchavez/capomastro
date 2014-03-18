@@ -16,6 +16,6 @@ class SshKeyPair(models.Model):
 
     def get_pkey(self):
         """
-        Returns an RSAKey for use with paramike SSHClient.
+        Returns an RSAKey for use with paramiko SSHClient.
         """
         return RSAKey(data=self.public_key, file_obj=StringIO(self.private_key))
