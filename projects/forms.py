@@ -19,9 +19,21 @@ class ProjectForm(forms.ModelForm):
         project = super(ProjectForm, self).save(commit=False)
         project.save()
 
+        requested_dependencies = set(self.cleaned_data["dependencies"])
+        current_dependencies = set(
+            [x.dependency for x in ProjectDependency.objects.filter(
+                project=project)])
+
+        dependencies_to_remove = current_dependencies - requested_dependencies
+        dependencies_to_add = requested_dependencies - current_dependencies
+
+        for dependency in dependencies_to_remove:
+            ProjectDependency.objects.get(project=project,
+                dependency=dependency).delete()
+
         # TODO: This probably shouldn't use the get_current_build if
         # auto_track=False
-        for dependency in self.cleaned_data["dependencies"]:
+        for dependency in dependencies_to_add:
             ProjectDependency.objects.create(
                 project=project, dependency=dependency,
                 auto_track=self.data.get("auto_track", False),
