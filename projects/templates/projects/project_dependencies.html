@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+
+{% block page_title %}{{ project.name }}{% endblock %}
+{% block page_class %}project{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div>
+      <h2>{{ project.name }}</h2>
+    </div>
+  </div>
+  <div class="row">
+    <h3>Dependencies</h3>
+    <p>Recent builds TODO: Make this more functional</p>
+    <table class="table table-condensed">
+      <thead>
+        <tr>
+          {% for dependency in builds_header  %}
+          <th>{{ dependency.name }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in builds_table  %}
+        <tr>
+          {% for build in row %}
+          <td class="{{ build.current|yesno:"success,info" }}">{% if build.build %}{{ build.build.number }}, {{ build.build.status }}{% else %}&nbsp;{% endif %}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

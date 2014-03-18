@@ -71,7 +71,7 @@ class ProjectCreateTest(WebTest):
         """
         project_url = reverse("project_create")
         response = self.app.get(project_url, user="testing")
-        form = response.forms["create-project"]
+        form = response.forms["project"]
         form["dependencies"].select_multiple(
             [self.dependency1.pk, self.dependency2.pk])
         form["name"].value = "My Project"
@@ -94,7 +94,7 @@ class ProjectCreateTest(WebTest):
         """
         project_url = reverse("project_create")
         response = self.app.get(project_url, user="testing")
-        form = response.forms["create-project"]
+        form = response.forms["project"]
         form["dependencies"].select_multiple(
             [self.dependency1.pk, self.dependency2.pk])
         form["name"].value = "My Project"
@@ -117,7 +117,7 @@ class ProjectCreateTest(WebTest):
 
         project_url = reverse("project_create")
         response = self.app.get(project_url, user="testing")
-        form = response.forms["create-project"]
+        form = response.forms["project"]
         form["dependencies"].select_multiple(
             [self.dependency1.pk])
         form["name"].value = "My Project"
@@ -396,39 +396,46 @@ class InitiateProjectBuildTest(WebTest):
         self.assertEqual([], build_job_mock.delay.mock_calls)
 
 
-#class ProjectUpdateTest(WebTest):
-#
-#    def setUp(self):
-#        self.user = User.objects.create_user("testing")
-#
-#    def test_page_requires_authenticated_user(self):
-#        """
-#        """
-#        # TODO: We should assert that requests without a logged in user
-#        # get redirected to login.
-#
-#    def test_project_update(self):
-#        """
-#        The update view should allow us to change the auto track status of the
-#        dependencies and add additional dependencies.
-#        """
-#        project = ProjectFactory.create()
-#        # TODO: Work out how to configure DjangoFactory to setup m2m through
-#        dependency = ProjectDependency.objects.create(
-#            project=project, dependency=DependencyFactory.create())
-#        # TODO: It'd be nice if this was driven by ProjectBuildFactory.
-#        projectbuilds = [
-#            build_project(project, queue_build=False) for x in range(6)]
-#
-#        project_url = reverse("project_detail", kwargs={"pk": project.pk})
-#        response = self.app.get(project_url, user="testing")
-#        self.assertEqual(200, response.status_code)
-#        self.assertEqual(project, response.context["project"])
-#        self.assertEqual([dependency], list(response.context["dependencies"]))
-#        self.assertEqual(
-#            projectbuilds[:5], list(response.context["projectbuilds"]))
-#
-#
+class ProjectUpdateTest(WebTest):
+
+    def setUp(self):
+        self.user = User.objects.create_superuser(
+            "testing", "testing@example.com", "password")
+
+    def test_page_requires_authenticated_user(self):
+        """
+        """
+        # TODO: We should assert that requests without a logged in user
+        # get redirected to login.
+
+    def test_project_update(self):
+        """
+        The update view should allow us to change the auto track status of the
+        dependencies and add additional dependencies.
+        """
+        project = ProjectFactory.create()
+        # TODO: Work out how to configure DjangoFactory to setup m2m through
+        projectdependency1 = ProjectDependency.objects.create(
+            project=project, dependency=DependencyFactory.create())
+
+        projectdependency2 = ProjectDependency.objects.create(
+            project=project, dependency=DependencyFactory.create())
+
+        project_url = reverse("project_update", kwargs={"pk": project.pk})
+        response = self.app.get(project_url, user="testing")
+        self.assertEqual(200, response.status_code)
+
+        form = response.forms["project"]
+        self.assertEqual(
+            [str(projectdependency1.dependency.pk),
+             str(projectdependency2.dependency.pk)],
+            form["dependencies"].value)
+        self.assertEqual(project.name, form["name"].value)
+
+        form["dependencies"].select_multiple([projectdependency2.dependency.pk])
+        form.submit().follow()
+
+        self.assertEqual(1, len(project.dependencies.all()))
 
 
 class ProjectDependenciesTest(WebTest):
