@@ -60,6 +60,7 @@ class Build(models.Model):
     url = models.CharField(max_length=255)
     phase = models.CharField(max_length=25)  # FINISHED, STARTED, COMPLETED
     status = models.CharField(max_length=255)
+    console_log = models.TextField(blank=True, null=True)
 
     class Meta:
         ordering = ["-number"]
