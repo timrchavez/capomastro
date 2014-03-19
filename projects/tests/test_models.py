@@ -49,6 +49,15 @@ class DependencyTest(TestCase):
             {"THISVALUE": "testing", "THATVALUE": "55"},
             dependency.get_build_parameters())
 
+    def test_get_parameters_with_no_parameters(self):
+        """
+        Dependency.get_build_parameters should None if there are no build
+        parameters.
+        """
+        dependency = DependencyFactory.create(parameters=None)
+        self.assertIsNone(dependency.get_build_parameters())
+
+
 
 class ProjectDependencyTest(TestCase):
 

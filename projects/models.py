@@ -38,7 +38,11 @@ class Dependency(models.Model):
         """
         Return the parameters property parsed into a dictionary of "build"
         parameters.
+
+        If we have no parameters, we should get None back.
         """
+        if not self.parameters:
+            return
         build_parameters = {}
         keyvalues = self.parameters.split("\n")
         for keyvalue in keyvalues:
