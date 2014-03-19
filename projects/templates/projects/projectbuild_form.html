@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+
+{% block page_title %}Wooster - Build Project{% endblock %}
+{% block page_class %}projects{% endblock %}
+
+{% block content %}
+<div class="container">
+  {% bootstrap_messages %}
+  <div class="row">
+    <div>
+      <h2>Build Project</h2>
+      <p>Please select all the dependencies you want to build.</p>
+      <form action="" method="post" class="form" id="buildproject-form">
+        {% csrf_token %}
+        {% bootstrap_form form %}
+        {% buttons %}
+          <button type="submit" class="btn btn-primary">Build</button>
+        {% endbuttons %}
+      </form>
+      <p>Any dependencies not selected will not be built and will default to the current built versions for this project.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

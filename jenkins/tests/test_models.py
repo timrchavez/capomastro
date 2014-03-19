@@ -3,9 +3,9 @@ from django.test import TestCase
 from httmock import HTTMock
 from jenkinsapi.jenkins import Jenkins
 
-from jenkins.models import Build
-from .factories import BuildFactory, JenkinsServerFactory
+from jenkins.models import Build, JobType
 from .helpers import mock_url
+from .factories import BuildFactory, JenkinsServerFactory
 
 
 class JenkinsServerTest(TestCase):
@@ -34,3 +34,11 @@ class BuildTest(TestCase):
         self.assertEqual(
             build_numbers,
             list(Build.objects.all().values_list("number", flat=True)))
+
+
+class JobTypeTest(TestCase):
+
+    def test_instantiation(self):
+        """We can create JobTypes."""
+        JobType.objects.create(
+            name="my-test", config_xml="testing xml")

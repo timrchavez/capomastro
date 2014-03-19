@@ -10,14 +10,13 @@
   <div class="row">
     <div>
       <h2>Dependency</h2>
-      <form action="" method="post" class="form">
+      <form action="" method="post" class="form" id="dependency-form">
         {% csrf_token %}
         {% bootstrap_form form %}
         {% buttons %}
           <button type="submit" class="btn btn-primary">Submit</button>
         {% endbuttons %}
       </form>
-
     </div>
   </div>
 </div>

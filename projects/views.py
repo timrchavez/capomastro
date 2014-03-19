@@ -1,23 +1,26 @@
 from django.shortcuts import get_object_or_404
-from django.views.generic import CreateView, ListView, DetailView, View
+from django.views.generic import (
+    CreateView, ListView, DetailView, FormView, UpdateView)
 from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 
 from braces.views import (
-    LoginRequiredMixin, PermissionRequiredMixin, FormValidMessageMixin,
-    SuccessURLRedirectListMixin)
+    LoginRequiredMixin, PermissionRequiredMixin, FormValidMessageMixin)
 
 from jenkins.models import Build
+from jenkins.tasks import build_job
 from projects.models import (
-    Project, Dependency, ProjectDependency, ProjectBuild, DependencyType)
-from projects.forms import ProjectForm
+    Project, Dependency, ProjectDependency, ProjectBuild,
+    ProjectBuildDependency)
+from projects.forms import ProjectForm, DependencyForm, ProjectBuildForm
 from projects.helpers import build_project
+from projects.utils import get_build_table_for_project
 
 
 class ProjectCreateView(
     LoginRequiredMixin, PermissionRequiredMixin, FormValidMessageMixin,
-    CreateView):
+        CreateView):
 
     permission_required = "projects.add_project"
     form_valid_message = "Project created"
@@ -25,7 +28,7 @@ class ProjectCreateView(
     form_class = ProjectForm
 
     def get_success_url(self):
-      return reverse("project_detail", kwargs={"pk": self.object.pk})
+        return reverse("project_detail", kwargs={"pk": self.object.pk})
 
 
 class ProjectListView(LoginRequiredMixin, ListView):
@@ -33,16 +36,47 @@ class ProjectListView(LoginRequiredMixin, ListView):
     model = Project
 
 
-class InitiateProjectBuildView(LoginRequiredMixin, View):
+class ProjectUpdateView(
+    LoginRequiredMixin, PermissionRequiredMixin, FormValidMessageMixin,
+        UpdateView):
+
+    permission_required = "projects.change_project"
+    form_valid_message = "Project updated"
+    model = Project
+    form_class = ProjectForm
+
+    def get_success_url(self):
+        return reverse("project_detail", kwargs={"pk": self.object.pk})
+
+
+class InitiateProjectBuildView(LoginRequiredMixin, FormView):
     """
     Starts building a project and redirects to the newly created ProjectBuild.
     """
+    form_class = ProjectBuildForm
+    template_name = "projects/projectbuild_form.html"
 
-    def post(self, request, pk):
-        project = Project.objects.get(pk=pk)
-        projectbuild = build_project(project, user=request.user)
+    def get_form(self, form_class):
+        """
+        Returns an instance of the form to be used in this view.
+        """
+        project = get_object_or_404(Project, pk=self.kwargs["pk"])
+        form = form_class(**self.get_form_kwargs())
+        dependencies = project.dependencies
+        form.fields["dependencies"].queryset = dependencies
+        initial_pks = [x.pk for x in dependencies.all()]
+        form.fields["dependencies"].initial = initial_pks
+        form.fields["project"].initial = project
+        return form
+
+    def form_valid(self, form):
+        project = form.cleaned_data["project"]
+        projectbuild = build_project(
+            project, user=self.request.user,
+            dependencies=form.cleaned_data["dependencies"])
         messages.add_message(
-            request, messages.INFO, "Build '%s' Queued." % projectbuild.build_id)
+            self.request, messages.INFO,
+            "Build '%s' queued." % projectbuild.build_id)
 
         url_args = {"project_pk": project.pk, "build_pk": projectbuild.pk}
         url = reverse("project_projectbuild_detail", kwargs=url_args)
@@ -55,7 +89,8 @@ class ProjectBuildListView(LoginRequiredMixin, ListView):
     model = ProjectBuild
 
     def get_queryset(self):
-        return ProjectBuild.objects.filter(project=self._get_project_from_url())
+        return ProjectBuild.objects.filter(
+            project=self._get_project_from_url())
 
     def _get_project_from_url(self):
         return get_object_or_404(Project, pk=self.kwargs["pk"])
@@ -76,14 +111,16 @@ class ProjectBuildDetailView(LoginRequiredMixin, DetailView):
     model = ProjectBuild
 
     def get_object(self):
-        return get_object_or_404(ProjectBuild,
-            project__pk=self.kwargs["project_pk"], pk=self.kwargs["build_pk"])
+        project_pk = self.kwargs["project_pk"]
+        build_pk = self.kwargs["build_pk"]
+        return get_object_or_404(
+            ProjectBuild, project__pk=project_pk, pk=build_pk)
 
     def _get_project_from_url(self):
         return get_object_or_404(Project, pk=self.kwargs["project_pk"])
 
-    def _get_related_builds(self, projectbuild):
-        return Build.objects.filter(build_id=projectbuild.build_id)
+    def _get_build_dependencies(self, projectbuild):
+        return ProjectBuildDependency.objects.filter(projectbuild=projectbuild)
 
     def get_context_data(self, **kwargs):
         """
@@ -92,7 +129,8 @@ class ProjectBuildDetailView(LoginRequiredMixin, DetailView):
         context = super(
             ProjectBuildDetailView, self).get_context_data(**kwargs)
         context["project"] = self._get_project_from_url()
-        context["builds"] = self._get_related_builds(context["projectbuild"])
+        context["dependencies"] = self._get_build_dependencies(
+            context["projectbuild"])
         return context
 
 
@@ -109,15 +147,23 @@ class ProjectDetailView(LoginRequiredMixin, DetailView):
             ProjectDetailView, self).get_context_data(**kwargs)
         context["dependencies"] = ProjectDependency.objects.filter(
             project=context["project"])
+        context["projectbuilds"] = ProjectBuild.objects.filter(
+            project=context["project"])[:5]
         return context
 
 
 class DependencyCreateView(
-    LoginRequiredMixin, PermissionRequiredMixin,
-    SuccessURLRedirectListMixin, FormValidMessageMixin, CreateView):
+    LoginRequiredMixin, PermissionRequiredMixin, FormValidMessageMixin,
+        CreateView):
 
+    permission_required = "projects.add_dependency"
+    form_valid_message = "Dependency created"
+    form_class = DependencyForm
     model = Dependency
-    fields = ["name", "dependency_type"]
+
+    def get_success_url(self):
+        url_args = {"pk": self.object.pk}
+        return reverse("dependency_detail", kwargs=url_args)
 
 
 class DependencyListView(LoginRequiredMixin, ListView):
@@ -126,24 +172,65 @@ class DependencyListView(LoginRequiredMixin, ListView):
     model = Dependency
 
 
-class DependencyTypeDetailView(LoginRequiredMixin, DetailView):
+class DependencyDetailView(LoginRequiredMixin, DetailView):
 
-    model = DependencyType
-    context_object_name = "dependencytype"
+    context_object_name = "dependency"
+    model = Dependency
+
+    def get_context_data(self, **kwargs):
+        """
+        Supplement the dependency.
+        """
+        context = super(
+            DependencyDetailView, self).get_context_data(**kwargs)
+        context["builds"] = Build.objects.filter(
+            job=context["dependency"].job)
+        context["projects"] = Project.objects.filter(
+            dependencies=context["dependency"])
+        return context
+
+    def post(self, request, pk):
+        """
+        """
+        dependency = get_object_or_404(Dependency, pk=pk)
+        build_job.delay(dependency.job.pk)
+        messages.add_message(
+            self.request, messages.INFO,
+            "Build for '%s' queued." % dependency.name)
+        url = reverse("dependency_detail", kwargs={"pk": dependency.pk})
+        return HttpResponseRedirect(url)
+
+
+class ProjectDependenciesView(LoginRequiredMixin, DetailView):
+
+    model = Project
+    context_object_name = "project"
+    template_name = "projects/project_dependencies.html"
+
+    def _get_builds_for_dependency(self, projectdependency):
+        """
+        Return the builds for a project dependency.
+        """
+        return Build.objects.filter(job=projectdependency.dependency.job)
 
     def get_context_data(self, **kwargs):
         """
         Supplement the project with its dependencies.
         """
         context = super(
-            DependencyTypeDetailView, self).get_context_data(**kwargs)
-        context["dependencies"] = ProjectDependency.objects.filter(
-            dependency__dependency_type=context["dependencytype"])
+            ProjectDependenciesView, self).get_context_data(**kwargs)
+        dependencies_status = []
+        dependencies = ProjectDependency.objects.filter(
+            project=context["project"])
+        header, table =  get_build_table_for_project(context["project"])
+        context["builds_header"] = header
+        context["builds_table"] = table
         return context
 
 
 __all__ = [
-    "ProjectCreateView", "ProjectListView", "ProjectDetailView", 
+    "ProjectCreateView", "ProjectListView", "ProjectDetailView",
     "DependencyCreateView", "InitiateProjectBuildView", "ProjectBuildListView",
-    "ProjectBuildDetailView", "DependencyListView", "DependencyTypeDetailView",
+    "ProjectBuildDetailView", "DependencyListView", "DependencyDetailView",
+    "ProjectUpdateView", "ProjectDependenciesView"
 ]

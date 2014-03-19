@@ -1,56 +1,20 @@
-from datetime import timedelta
-
 from django.db import models
 from django.db.models.signals import post_save
-from django.dispatch import receiver
+from django.dispatch import receiver, Signal
 from django.contrib.auth.models import User
-from django.template import Template, Context
 from django.utils import timezone
 
 from jenkins.models import Job, Build, Artifact
-from jenkins.utils import get_notifications_url
-from projects.helpers import DefaultSettings
 from archives.models import TRANSPORTS, POLICIES
 
 
-def get_context_for_template(dependency):
-    """
-    Returns a Context for the Job XML templating.
-    """
-    settings = DefaultSettings({"NOTIFICATION_HOST": "http://localhost"})
-    notifications_url = get_notifications_url(settings.NOTIFICATION_HOST)
-    context_vars = {
-        "notification_host": get_notifications_url(settings.NOTIFICATION_HOST),
-        "dependency": dependency,
-    }
-    return Context(context_vars)
-
-
-class DependencyType(models.Model):
-    """
-    Used as a model for creating new Jenkins jobs.
-    """
-
-    name = models.CharField(max_length=255)
-    description = models.TextField(null=True, blank=True)
-    config_xml = models.TextField()
-
-    def __str__(self):
-        return self.name
-
-    def generate_config_for_dependency(self, dependency):
-        """
-        Parse the config XML as a Django template, replacing {{}} holders etc
-        as appropriate.
-        """
-        context = get_context_for_template(dependency)
-        return Template(self.config_xml).render(context)
+# Signals
+projectbuild_finished = Signal(providing_args=["projectbuild"])
 
 
 class Dependency(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
-    dependency_type = models.ForeignKey(DependencyType)
     job = models.ForeignKey(Job, null=True)
     description = models.TextField(null=True, blank=True)
 
@@ -77,7 +41,7 @@ class ProjectDependency(models.Model):
     e.g. Project X can use build 20 of dependency Y while
          Project Z is using build 23.
 
-         So, this is the specific "tag" version of the 
+         So, this is the specific "tag" version of the
          dependency that's used by this project.
 
          We can have a UI that shows what the current version is
@@ -86,17 +50,22 @@ class ProjectDependency(models.Model):
     dependency = models.ForeignKey(Dependency)
     project = models.ForeignKey("Project")
     auto_track = models.BooleanField(default=True)
-    current_build = models.ForeignKey(Build, null=True)
+    current_build = models.ForeignKey(Build, null=True, editable=False)
 
     class Meta:
         verbose_name_plural = "project dependencies"
+
+    def __str__(self):
+        return "{0} dependency for {1} {2}".format(
+            self.dependency, self.project, self.auto_track)
 
 
 class Project(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(null=True, blank=True)
-    dependencies = models.ManyToManyField(Dependency, through=ProjectDependency)
+    dependencies = models.ManyToManyField(
+        Dependency, through=ProjectDependency)
 
     def get_current_artifacts(self):
         """
@@ -113,6 +82,22 @@ class Project(models.Model):
         return self.name
 
 
+class ProjectBuildDependency(models.Model):
+    """
+    Represents one of the dependencies of a particular Projet Build.
+    """
+    projectbuild = models.ForeignKey("ProjectBuild")
+    build = models.ForeignKey(Build, blank=True, null=True)
+    dependency = models.ForeignKey(Dependency)
+
+    class Meta:
+        verbose_name_plural = "project build dependencies"
+
+    def __str__(self):
+        return "Build of {0} for {1}".format(
+            self.dependency.name, self.projectbuild.build_id)
+
+
 class ProjectBuild(models.Model):
     """Represents a requested build of a Project."""
 
@@ -120,8 +105,12 @@ class ProjectBuild(models.Model):
     requested_by = models.ForeignKey(User, null=True, blank=True)
     requested_at = models.DateTimeField(auto_now_add=True)
     ended_at = models.DateTimeField(null=True)
-    status = models.CharField(max_length=10, default="INCOMPLETE")
+    status = models.CharField(max_length=10, default="UNKNOWN")
+    phase = models.CharField(max_length=25, default="UNKNOWN")
     build_id = models.CharField(max_length=20)
+
+    build_dependencies = models.ManyToManyField(
+        Build, through=ProjectBuildDependency)
 
     def __str__(self):
         return self.project.name
@@ -157,12 +146,14 @@ def generate_projectbuild_id(projectbuild):
     """
     # This is a possible race condition
     today = timezone.now()
-    filters = {"requested_at__gt": today.replace(hour=0, minute=0, second=0),
-               "requested_at__lte": today.replace(hour=23, minute=59, second=59),
+
+    day_start = today.replace(hour=0, minute=0, second=0)
+    day_end = today.replace(hour=23, minute=59, second=59)
+    filters = {"requested_at__gt": day_start,
+               "requested_at__lte": day_end,
                "project": projectbuild.project}
     today_count = ProjectBuild.objects.filter(**filters).count()
     return today.strftime("%%Y%%m%%d.%d" % today_count)
-
 
 
 @receiver(post_save, sender=Build, dispatch_uid="new_build_handler")
@@ -170,6 +161,44 @@ def handle_new_build(sender, created, instance, **kwargs):
     if instance.job.dependency_set.exists():
         for dependency in instance.job.dependency_set.all():
             for project_dependency in dependency.projectdependency_set.filter(
-                auto_track=True):
+                    auto_track=True):
                 project_dependency.current_build = instance
                 project_dependency.save()
+
+
+@receiver(post_save, sender=Build, dispatch_uid="projectbuild_build_handler")
+def handle_builds_for_projectbuild(sender, created, instance, **kwargs):
+    if instance.build_id:
+        dependency = ProjectBuildDependency.objects.filter(
+            dependency__job=instance.job,
+            projectbuild__build_id=instance.build_id).first()
+        # TODO: This event handler should be split...
+        # This is a possible race-condition, if we have multiple dependencies
+        # being processed at the same time, then we could miss the status of
+        # one.
+        #
+        # Splitting it into a task would rule out using events tho'.
+        if dependency:
+            dependency.build = instance
+            dependency.save()
+            projectbuild = dependency.projectbuild
+
+            build_statuses = ProjectBuildDependency.objects.filter(
+                projectbuild=dependency.projectbuild).values(
+                    "build__status", "build__phase")
+
+            statuses = set([x["build__status"] for x in build_statuses])
+            phases = set([x["build__phase"] for x in build_statuses])
+            updated = False
+            if len(statuses) == 1:
+                projectbuild.status = list(statuses)[0]
+                updated = True
+            if len(phases) == 1:
+                projectbuild.phase = list(phases)[0]
+                if projectbuild.phase == "FINISHED":
+                    projectbuild.ended_at = timezone.now()
+                    projectbuild.save()
+                    projectbuild_finished.send(
+                        sender=ProjectBuild, projectbuild=projectbuild)
+            if updated:
+                projectbuild.save()

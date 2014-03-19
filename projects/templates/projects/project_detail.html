@@ -12,7 +12,7 @@
     </div>
   </div>
   <div class="row">
-    <h3>Dependencies</h3>
+    <h3><a href="{% url 'project_dependencies' pk=project.pk %}">Dependencies</a></h3>
     <table class="table table-striped">
       <thead>
         <tr>
@@ -32,12 +32,9 @@
       </tbody>
     </table>
     <p>
-      <form action="{% url 'project_initiate_projectbuild' pk=project.pk %}" method="post" class="form" id="build-project">
-        {% csrf_token %}
-        {% buttons %}
-          <button type="submit" class="btn btn-primary">Build project»</button>
-        {% endbuttons %}
-      </form>
+      <p>
+        <a href="{% url 'project_initiate_projectbuild' pk=project.pk %}" class="btn btn-primary" role="button">Build project »</a>
+        <a href="{% url 'project_update' pk=project.pk %}" class="btn" role="button">Edit project »</a>
     </p>
   </div>
   <div class="row">
@@ -56,6 +53,31 @@
           <td>{{ artifact.build }}</td>
           <td>{{ artifact.filename }}</td>
           <td><a href="{{ artifact.url }}">{{ artifact.url }}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="row">
+    <h3>Recent builds</h3>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Build Id</th>
+          <th>Requested by</th>
+          <th>Requested at</th>
+          <th>Ended at</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for build in projectbuilds %}
+        <tr>
+          <td><a href="{% url 'project_projectbuild_detail' project_pk=project.pk build_pk=build.pk %}">{{ build.build_id }}</a></td>
+          <td>{{ build.requested_by }}</td>
+          <td>{{ build.requested_at }}</td>
+          <td>{{ build.ended_at }}</td>
+          <td>{{ build.status }}</td>
         </tr>
         {% endfor %}
       </tbody>

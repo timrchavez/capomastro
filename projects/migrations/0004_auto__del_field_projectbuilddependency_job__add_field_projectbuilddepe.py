@@ -8,46 +8,27 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Deleting model 'DependencyType'
-        db.delete_table(u'projects_dependencytype')
+        # Deleting field 'ProjectBuildDependency.job'
+        db.delete_column(u'projects_projectbuilddependency', 'job_id')
 
-        # Deleting model 'ProjectBuildDependency'
-        db.delete_table(u'projects_projectbuilddependency')
-
-        # Adding unique constraint on 'Project', fields ['name']
-        db.create_unique(u'projects_project', ['name'])
-
-        # Deleting field 'Dependency.dependency_type'
-        db.delete_column(u'projects_dependency', 'dependency_type_id')
+        # Adding field 'ProjectBuildDependency.dependency'
+        db.add_column(u'projects_projectbuilddependency', 'dependency',
+                      self.gf('django.db.models.fields.related.ForeignKey')(default=1, to=orm['projects.Dependency']),
+                      keep_default=False)
 
 
     def backwards(self, orm):
-        # Removing unique constraint on 'Project', fields ['name']
-        db.delete_unique(u'projects_project', ['name'])
 
-        # Adding model 'DependencyType'
-        db.create_table(u'projects_dependencytype', (
-            ('config_xml', self.gf('django.db.models.fields.TextField')()),
-            ('description', self.gf('django.db.models.fields.TextField')(null=True, blank=True)),
-            ('name', self.gf('django.db.models.fields.CharField')(max_length=255)),
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-        ))
-        db.send_create_signal(u'projects', ['DependencyType'])
-
-        # Adding model 'ProjectBuildDependency'
-        db.create_table(u'projects_projectbuilddependency', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-        ))
-        db.send_create_signal(u'projects', ['ProjectBuildDependency'])
-
-
-        # User chose to not deal with backwards NULL issues for 'Dependency.dependency_type'
-        raise RuntimeError("Cannot reverse this migration. 'Dependency.dependency_type' and its values cannot be restored.")
+        # User chose to not deal with backwards NULL issues for 'ProjectBuildDependency.job'
+        raise RuntimeError("Cannot reverse this migration. 'ProjectBuildDependency.job' and its values cannot be restored.")
         
-        # The following code is provided here to aid in writing a correct migration        # Adding field 'Dependency.dependency_type'
-        db.add_column(u'projects_dependency', 'dependency_type',
-                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['projects.DependencyType']),
+        # The following code is provided here to aid in writing a correct migration        # Adding field 'ProjectBuildDependency.job'
+        db.add_column(u'projects_projectbuilddependency', 'job',
+                      self.gf('django.db.models.fields.related.ForeignKey')(to=orm['jenkins.Job']),
                       keep_default=False)
+
+        # Deleting field 'ProjectBuildDependency.dependency'
+        db.delete_column(u'projects_projectbuilddependency', 'dependency_id')
 
 
     models = {
@@ -108,10 +89,10 @@ class Migration(SchemaMigration):
             'username': ('django.db.models.fields.CharField', [], {'max_length': '255'})
         },
         u'jenkins.job': {
-            'Meta': {'object_name': 'Job'},
+            'Meta': {'unique_together': "(('server', 'name'),)", 'object_name': 'Job'},
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'jobtype': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['jenkins.JobType']"}),
-            'name': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'name': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
             'server': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['jenkins.JenkinsServer']"})
         },
         u'jenkins.jobtype': {
@@ -137,6 +118,7 @@ class Migration(SchemaMigration):
         },
         u'projects.projectbuild': {
             'Meta': {'object_name': 'ProjectBuild'},
+            'build_dependencies': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['jenkins.Build']", 'through': u"orm['projects.ProjectBuildDependency']", 'symmetrical': 'False'}),
             'build_id': ('django.db.models.fields.CharField', [], {'max_length': '20'}),
             'ended_at': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
@@ -144,6 +126,13 @@ class Migration(SchemaMigration):
             'requested_at': ('django.db.models.fields.DateTimeField', [], {'auto_now_add': 'True', 'blank': 'True'}),
             'requested_by': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['auth.User']", 'null': 'True', 'blank': 'True'}),
             'status': ('django.db.models.fields.CharField', [], {'default': "'INCOMPLETE'", 'max_length': '10'})
+        },
+        u'projects.projectbuilddependency': {
+            'Meta': {'object_name': 'ProjectBuildDependency'},
+            'build': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['jenkins.Build']", 'null': 'True', 'blank': 'True'}),
+            'dependency': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['projects.Dependency']"}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'projectbuild': ('django.db.models.fields.related.ForeignKey', [], {'to': u"orm['projects.ProjectBuild']"})
         },
         u'projects.projectdependency': {
             'Meta': {'object_name': 'ProjectDependency'},

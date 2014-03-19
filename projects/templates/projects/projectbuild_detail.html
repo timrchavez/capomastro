@@ -10,6 +10,7 @@
   <div class="row">
     <div>
       <h2>{{ projectbuild.build_id }}</h2>
+      <p>Build for <a href="{% url 'project_detail' pk=projectbuild.project.pk %}">{{ projectbuild.project.name }}</a></p>
     </div>
   </div>
   <div class="row">
@@ -18,16 +19,22 @@
       <thead>
         <tr>
           <th>Build #</th>
+          <th>Name</th>
           <th>Status</th>
-          <th>URL</th>
+          <th>Phase</th>
         </tr>
       </thead>
       <tbody>
-        {% for build in builds %}
-        <tr class="{{ build.status|build_status_to_class }}">
-          <td>{{ build.number }}</td>
-          <td>{{ build.status }}</td>
-          <td>{{ build.phase }}</td>
+        {% for dependency in dependencies %}
+        <tr>
+          {% if dependency.build %}
+          <td>{{ dependency.build.number }}</td>
+          <td>{{ dependency.dependency.name }}</td>
+          <td>{{ dependency.build.status }}</td>
+          <td><a href="{{ dependency.build.url }}">{{ dependency.build.phase }}</a></td>
+          {% else %}
+          <td colspan="3">Waiting for build of job {{ dependency.job }}</td>
+          {% endif %}
         </tr>
         {% endfor %}
       </tbody>
