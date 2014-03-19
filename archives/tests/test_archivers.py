@@ -39,10 +39,10 @@ class ArchiverTest(TestCase):
 
 
 class SshArchiverTest(TestCase):
-    def test_ssh_and_sftp_clients_used(self):
+
+    def _get_mock_policy_and_target(self):
         """
-        The SSHClient and SFTPClient should be used to
-        transport artifacts.
+        Helper for generating a mock policy and archive target.
         """
         mock_policy = mock.Mock()
         mock_policy.get_mappings()
@@ -51,12 +51,16 @@ class SshArchiverTest(TestCase):
         }
         mock_target = mock.Mock()
         mock_target.basedir = "/var/www"
-        mock_target.host = "archive.ubuntu.com"
+        mock_target.host = "archive.example.com"
         mock_target.ssh_credentials.get_pkey()
         mock_target.ssh_credentials.get_pkey.return_value = mock.Mock()
 
-        manager = mock.Mock()
+        return (mock_policy, mock_target)
 
+    def _get_archiver_and_mocks(self, manager, policy, target):
+        """
+        Get an archiver, loaded with mocks.
+        """
         with mock.patch("archives.archivers.SSHClient") as mock_client:
             with mock.patch("archives.archivers.SFTPClient") as mock_sftp:
                 with mock.patch("archives.archivers.urllib2") as mock_urllib2:
@@ -66,25 +70,80 @@ class SshArchiverTest(TestCase):
                     mock_urllib2.return_value = manager.urllib2
                     mock_client.return_value.exec_command.return_value = (
                         None, mock.Mock(), None)
-                    archiver = SshArchiver(mock_policy, mock_target)
+                    mock_client.return_value.get_transport.return_value = "TRANSPORT"
+                    archiver =  SshArchiver(policy, target)
                     archiver.archive()
-
+                    return (archiver, mock_client, mock_sftp, mock_urllib2)
+                    
+    def test_ssh_client_connects_to_target(self):
+        """
+        The SSHClient should connect to the host specified by the
+        archive target.
+        """
+        mock_policy, mock_target = self._get_mock_policy_and_target()
+        manager = mock.Mock()
+        archiver, mock_client, mock_sftp, mock_urllib2 = self._get_archiver_and_mocks(
+            manager, mock_policy, mock_target)
         expected_calls = [
             # ssh client gets set up
             mock.call.client(),
             mock.call.client().set_missing_host_key_policy(mock.ANY),
             # connect to the target archive
             mock.call.client().connect(
-                'archive.ubuntu.com',
-                pkey=mock_target.ssh_credentials.get_pkey()),
+                'archive.example.com',
+                pkey=mock_target.ssh_credentials.get_pkey())]
+
+        manager.assert_has_calls(expected_calls)
+
+    def test_sftp_client_loaded_with_ssh_client_transport(self):
+        """
+        The sftp client should use the ssh client's transport.
+        """
+        mock_policy, mock_target = self._get_mock_policy_and_target()
+        manager = mock.Mock()
+        archiver, mock_client, mock_sftp, mock_urllib2 = self._get_archiver_and_mocks(
+            manager, mock_policy, mock_target)
+        expected_calls = [
             mock.call.client().get_transport(),
-            mock.call.sftp.from_transport(mock.ANY),
-            # init the remote directory structure
+            mock.call.sftp.from_transport("TRANSPORT")]
+        manager.assert_has_calls(expected_calls)
+
+    def test_remote_directory_structure_is_initialized(self):
+        """
+        A command is set through the ssh client to create the
+        base directory for the file to be uploaded.
+        """
+        mock_policy, mock_target = self._get_mock_policy_and_target()
+        manager = mock.Mock()
+        archiver, mock_client, mock_sftp, mock_urllib2 = self._get_archiver_and_mocks(
+            manager, mock_policy, mock_target)
+        expected_calls = [
             mock.call.client().exec_command(
-                'mkdir -p `dirname /var/www/mapped/path/1/`'),
-            # upload the file
+                "mkdir -p `dirname /var/www/mapped/path/1/`"), ]
+        manager.assert_has_calls(expected_calls)
+
+    def test_file_is_read_and_sent_over_sftp(self):
+        """
+        The remote artifact is read using urllib2 and
+        sent over sftp.
+        """
+        mock_policy, mock_target = self._get_mock_policy_and_target()
+        manager = mock.Mock()
+        archiver, mock_client, mock_sftp, mock_urllib2 = self._get_archiver_and_mocks(
+            manager, mock_policy, mock_target)
+        expected_calls = [
             mock.call.urllib2.urlopen('/path/1/'),
             mock.call.sftp.from_transport().stream_file_to_remote(
-                mock_urllib2.urlopen(), '/var/www/mapped/path/1/'),
-            mock.call.client().close()]
+                mock_urllib2.urlopen(), '/var/www/mapped/path/1/')]
+        manager.assert_has_calls(expected_calls)
+
+    def test_ssh_client_gets_closed(self):
+        """
+        The ssh client's connection gets closed.
+        """
+        mock_policy, mock_target = self._get_mock_policy_and_target()
+        manager = mock.Mock()
+        archiver, mock_client, mock_sftp, mock_urllib2 = self._get_archiver_and_mocks(
+            manager, mock_policy, mock_target)
+        expected_calls = [mock.call.client().close(), ]
         manager.assert_has_calls(expected_calls)
