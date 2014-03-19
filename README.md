@@ -61,3 +61,10 @@ http://hostname/jenkins/notifications/.
 
 9. Now, you can build your project, this will create a project build, and
    trigger the tasks to build your project.
+
+Testing
+-------
+
+Assuming you have [tox](https://testrun.org/tox/latest/) installed, run:
+
+    $ tox
