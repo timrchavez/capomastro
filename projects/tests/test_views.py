@@ -252,6 +252,7 @@ class DependencyCreateTest(WebTest):
         form["jobtype"].select(self.jobtype.pk)
         form["server"].select(self.server.pk)
         form["name"].value = "My Dependency"
+        form["parameters"].value = "MYVALUE=this is a test\nNEWVALUE=testing"
 
         with mock.patch("projects.forms.push_job_to_jenkins") as job_mock:
             response = form.submit().follow()
@@ -260,6 +261,9 @@ class DependencyCreateTest(WebTest):
         job = Job.objects.get(jobtype=self.jobtype, server=self.server)
         job_mock.delay.assert_called_once_with(job.pk)
         self.assertEqual(new_dependency.job, job)
+        self.assertEqual(
+            "MYVALUE=this is a test\nNEWVALUE=testing",
+            new_dependency.parameters)
 
 
 class DependencyDetailTest(WebTest):

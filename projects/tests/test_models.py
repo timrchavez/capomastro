@@ -38,6 +38,17 @@ class DependencyTest(TestCase):
         dependency = DependencyFactory.create()
         self.assertEqual(None, dependency.get_current_build())
 
+    def test_get_parameters(self):
+        """
+        Dependency.get_build_parameters should return a dictionary parsed from
+        the parameters property.
+        """
+        dependency = DependencyFactory.create(
+            parameters="THISVALUE=testing\nTHATVALUE=55")
+        self.assertEqual(
+            {"THISVALUE": "testing", "THATVALUE": "55"},
+            dependency.get_build_parameters())
+
 
 class ProjectDependencyTest(TestCase):
 

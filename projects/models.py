@@ -17,6 +17,7 @@ class Dependency(models.Model):
     name = models.CharField(max_length=255, unique=True)
     job = models.ForeignKey(Job, null=True)
     description = models.TextField(null=True, blank=True)
+    parameters = models.TextField(null=True, blank=True)
 
     class Meta:
         verbose_name_plural = "dependencies"
@@ -32,6 +33,18 @@ class Dependency(models.Model):
             finished_builds = self.job.build_set.filter(phase="FINISHED")
             if finished_builds.count() > 0:
                 return finished_builds.order_by("-number")[0]
+
+    def get_build_parameters(self):
+        """
+        Return the parameters property parsed into a dictionary of "build"
+        parameters.
+        """
+        build_parameters = {}
+        keyvalues = self.parameters.split("\n")
+        for keyvalue in keyvalues:
+            key, value = keyvalue.split("=")
+            build_parameters[key.strip()] = value.strip()
+        return build_parameters
 
 
 class ProjectDependency(models.Model):
