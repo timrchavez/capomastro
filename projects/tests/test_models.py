@@ -182,7 +182,7 @@ class ProjectBuildTest(TestCase):
         dependency = build_dependencies.get(dependency=dependency1)
         self.assertEqual(build1, dependency.build)
 
-        dependency = build_dependencies.get(dependency=dependency2.job)
+        dependency = build_dependencies.get(dependency=dependency2)
         self.assertIsNone(dependency.build)
 
     def test_project_build_status_when_all_dependencies_have_builds(self):
