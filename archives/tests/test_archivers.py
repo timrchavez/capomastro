@@ -64,16 +64,18 @@ class SshArchiverTest(TestCase):
         with mock.patch("archives.archivers.SSHClient") as mock_client:
             with mock.patch("archives.archivers.SFTPClient") as mock_sftp:
                 with mock.patch("archives.archivers.urllib2") as mock_urllib2:
-                    manager.attach_mock(mock_client, "client")
-                    manager.attach_mock(mock_sftp, "sftp")
-                    manager.attach_mock(mock_urllib2, "urllib2")
-                    mock_urllib2.return_value = manager.urllib2
-                    mock_client.return_value.exec_command.return_value = (
-                        None, mock.Mock(), None)
-                    mock_client.return_value.get_transport.return_value = "TRANSPORT"
-                    archiver =  SshArchiver(policy, target)
-                    archiver.archive()
-                    return (archiver, mock_client, mock_sftp, mock_urllib2)
+                    with mock.patch("archives.archivers.WarningPolicy") as mock_hostpolicy:
+                        manager.attach_mock(mock_client, "client")
+                        manager.attach_mock(mock_sftp, "sftp")
+                        manager.attach_mock(mock_urllib2, "urllib2")
+                        manager.attach_mock(mock_hostpolicy, "hostpolicy")
+                        mock_urllib2.return_value = manager.urllib2
+                        mock_hostpolicy.return_value = manager.hostpolicy
+                        mock_client.return_value.exec_command.return_value = (
+                            None, mock.Mock(), None)
+                        mock_client.return_value.get_transport.return_value = "TRANSPORT"
+                        archiver =  SshArchiver(policy, target)
+                        archiver.archive()
                     
     def test_ssh_client_connects_to_target(self):
         """
@@ -82,13 +84,12 @@ class SshArchiverTest(TestCase):
         """
         mock_policy, mock_target = self._get_mock_policy_and_target()
         manager = mock.Mock()
-        archiver, mock_client, mock_sftp, mock_urllib2 = self._get_archiver_and_mocks(
+        self._get_archiver_and_mocks(
             manager, mock_policy, mock_target)
         expected_calls = [
-            # ssh client gets set up
             mock.call.client(),
-            mock.call.client().set_missing_host_key_policy(mock.ANY),
-            # connect to the target archive
+            mock.call.hostpolicy(),
+            mock.call.client().set_missing_host_key_policy(manager.hostpolicy),
             mock.call.client().connect(
                 'archive.example.com',
                 pkey=mock_target.ssh_credentials.get_pkey())]
@@ -101,7 +102,7 @@ class SshArchiverTest(TestCase):
         """
         mock_policy, mock_target = self._get_mock_policy_and_target()
         manager = mock.Mock()
-        archiver, mock_client, mock_sftp, mock_urllib2 = self._get_archiver_and_mocks(
+        self._get_archiver_and_mocks(
             manager, mock_policy, mock_target)
         expected_calls = [
             mock.call.client().get_transport(),
@@ -115,7 +116,7 @@ class SshArchiverTest(TestCase):
         """
         mock_policy, mock_target = self._get_mock_policy_and_target()
         manager = mock.Mock()
-        archiver, mock_client, mock_sftp, mock_urllib2 = self._get_archiver_and_mocks(
+        self._get_archiver_and_mocks(
             manager, mock_policy, mock_target)
         expected_calls = [
             mock.call.client().exec_command(
@@ -129,12 +130,12 @@ class SshArchiverTest(TestCase):
         """
         mock_policy, mock_target = self._get_mock_policy_and_target()
         manager = mock.Mock()
-        archiver, mock_client, mock_sftp, mock_urllib2 = self._get_archiver_and_mocks(
+        self._get_archiver_and_mocks(
             manager, mock_policy, mock_target)
         expected_calls = [
             mock.call.urllib2.urlopen('/path/1/'),
             mock.call.sftp.from_transport().stream_file_to_remote(
-                mock_urllib2.urlopen(), '/var/www/mapped/path/1/')]
+                manager.urllib2.urlopen(), '/var/www/mapped/path/1/')]
         manager.assert_has_calls(expected_calls)
 
     def test_ssh_client_gets_closed(self):
@@ -143,7 +144,7 @@ class SshArchiverTest(TestCase):
         """
         mock_policy, mock_target = self._get_mock_policy_and_target()
         manager = mock.Mock()
-        archiver, mock_client, mock_sftp, mock_urllib2 = self._get_archiver_and_mocks(
+        self._get_archiver_and_mocks(
             manager, mock_policy, mock_target)
         expected_calls = [mock.call.client().close(), ]
         manager.assert_has_calls(expected_calls)
