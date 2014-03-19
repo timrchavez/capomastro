@@ -9,16 +9,20 @@ pulled into the database where they can easily be download, or archived.
 
 To get started...
 
-1. mkvirtualenv <name>
+1. `mkvirtualenv <name>`
 
-2. pip install -r requirements.txt (or dev-requirements.txt if you're going to
-   run the tests)
+2. `pip install -r requirements.txt` (or dev-requirements.txt if you're going
+   to run the tests)
 
-3. Copy the wooster/local_settings.py.example to wooster/local_settings.py and
-   fixup the database entry.
+3. Copy the `wooster/local_settings.py.example` to `wooster/local_settings.py`
+   and fixup the database entry
 
-4. You'll need to setup the database ./manage.py syncdb --migrate - you'll be
+4. You'll need to setup the database `./manage.py syncdb --migrate` - you'll be
    prompted to create a superuser.
+
+Steps 1 and 2 can be replaced with `tox -e devenv`. Then either activate the
+virtualenv manually with `source devenv/bin/activate` or explicitly call
+Python from the virtualenv with `devenv/bin/python`.
 
 You can do the next steps through the /admin/ interface, so go to
 http://localhost:8000/admin/ login and continue.
