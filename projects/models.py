@@ -5,7 +5,6 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 from jenkins.models import Job, Build, Artifact
-from archives.models import TRANSPORTS, POLICIES
 
 
 # Signals
@@ -139,15 +138,6 @@ class ProjectBuild(models.Model):
         project build.
         """
         return Artifact.objects.filter(build__build_id=self.build_id)
-
-    def get_archiver(self, archive_target):
-        """
-        Passed an Archive, returns a contructed Archiver.
-        """
-        policy = POLICIES[archive_target.policy](self)
-        archiver = TRANSPORTS[archive_target.transport](
-            policy, archive_target)
-        return archiver
 
     def save(self, **kwargs):
         if not self.pk:

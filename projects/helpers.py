@@ -1,5 +1,6 @@
 from jenkins.tasks import build_job
-from  projects.models import ProjectDependency
+from projects.models import ProjectDependency, ProjectBuild
+from archives.models import Archive
 
 
 def build_dependency(dependency, build_id=None):
@@ -49,3 +50,23 @@ def build_project(project, user=None, dependencies=None, queue_build=True):
                   "build": dependency.current_build}
         ProjectBuildDependency.objects.create(**kwargs)
     return build
+
+
+def get_transport_for_projectbuild(projectbuild, archive):
+    """
+    Returns a transport for a projectbuild to be archived to a specific
+    archive.
+    """
+    policy = archive.get_policy()(projectbuild)
+    transport = archive.get_archiver()(policy, archive)
+    return transport
+
+
+def archive_projectbuild(projectbuild, archive):
+    """
+    Archives the artifacts for a projectbuild.
+
+    Requires a projectbuild and a destination archive.
+    """
+    transport = get_transport_for_projectbuild(projectbuild, archive)
+    transport.archive()
