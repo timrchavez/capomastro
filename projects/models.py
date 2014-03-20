@@ -3,6 +3,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver, Signal
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.utils.encoding import python_2_unicode_compatible
 
 from jenkins.models import Job, Build, Artifact
 
@@ -10,7 +11,7 @@ from jenkins.models import Job, Build, Artifact
 # Signals
 projectbuild_finished = Signal(providing_args=["projectbuild"])
 
-
+@python_2_unicode_compatible
 class Dependency(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
@@ -50,6 +51,7 @@ class Dependency(models.Model):
         return build_parameters
 
 
+@python_2_unicode_compatible
 class ProjectDependency(models.Model):
     """
     Represents the build of a dependency used by a project.
@@ -76,6 +78,7 @@ class ProjectDependency(models.Model):
             self.dependency, self.project, self.auto_track)
 
 
+@python_2_unicode_compatible
 class Project(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
@@ -98,6 +101,7 @@ class Project(models.Model):
         return self.name
 
 
+@python_2_unicode_compatible
 class ProjectBuildDependency(models.Model):
     """
     Represents one of the dependencies of a particular Projet Build.
@@ -114,6 +118,7 @@ class ProjectBuildDependency(models.Model):
             self.dependency.name, self.projectbuild.build_id)
 
 
+@python_2_unicode_compatible
 class ProjectBuild(models.Model):
     """Represents a requested build of a Project."""
 
