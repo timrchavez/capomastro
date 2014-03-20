@@ -10,6 +10,7 @@ class LoggingArchiver(Archiver):
     code makes.
     """
     log = []
+
     def start(self):
         self.log.append("START")
 
@@ -21,6 +22,7 @@ class LoggingArchiver(Archiver):
 
 
 class ArchiverTest(TestCase):
+
     def test_archiver_sequence(self):
         """
         The start code is called before archiving each
@@ -74,9 +76,9 @@ class SshArchiverTest(TestCase):
                         mock_client.return_value.exec_command.return_value = (
                             None, mock.Mock(), None)
                         mock_client.return_value.get_transport.return_value = "TRANSPORT"
-                        archiver =  SshArchiver(policy, target)
+                        archiver = SshArchiver(policy, target)
                         archiver.archive()
-                    
+
     def test_ssh_client_connects_to_target(self):
         """
         The SSHClient should connect to the host specified by the
