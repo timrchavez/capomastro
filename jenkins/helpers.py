@@ -17,8 +17,6 @@ def import_build_for_job(job_pk, build_number):
     jenkins_job = client.get_job(job.name)
     build_result = jenkins_job.get_build(build_number)
 
-    build_log = build_result.get_console_log()
-
     # TODO: Shouldn't access _data here.
     build_details = {
         "status": build_result.get_status(),
@@ -27,7 +25,7 @@ def import_build_for_job(job_pk, build_number):
         # "build_id": build_result._data["id"],
         "duration": build_result._data["duration"],
         "url": build_result.get_result_url(),
-        "console_log": build_log,
+        "console_log": build_result.get_console_log(),
     }
     logging.info("%s" % build_details)
     Build.objects.filter(job=job, number=build_number).update(**build_details)
