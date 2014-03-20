@@ -4,9 +4,13 @@ import mock
 
 from projects.models import (
     ProjectBuild, ProjectDependency, ProjectBuildDependency)
-from projects.helpers import build_project
+from credentials.models import SshKeyPair
+from projects.helpers import (
+    build_project, archive_projectbuild, get_transport_for_projectbuild)
 from .factories import ProjectFactory, DependencyFactory
-from jenkins.tests.factories import BuildFactory
+from jenkins.tests.factories import BuildFactory, ArtifactFactory
+from archives.models import Archive
+from archives.tests.factories import ArchiveFactory
 
 
 class BuildProjectTest(TestCase):
@@ -86,7 +90,6 @@ class BuildProjectTest(TestCase):
             [mock.call(dep1.job.pk, new_build.build_id),
              mock.call(dep2.job.pk, new_build.build_id)])
 
-
     def test_build_project_assigns_user_correctly(self):
         """
         If we pass a user to build_project, the user is assigned as the user
@@ -100,3 +103,51 @@ class BuildProjectTest(TestCase):
 
         new_build = build_project(project, user=user, queue_build=False)
         self.assertEqual(user, new_build.requested_by)
+
+
+class ArchiveProjectBuildTest(TestCase):
+
+    def test_get_transport_for_projectbuild(self):
+        """
+        get_transport_for_projectbuild returns an Archiver ready to archive a
+        project build.
+        """
+        archive = ArchiveFactory.create()
+        project = ProjectFactory.create()
+        dependency = DependencyFactory.create()
+        ProjectDependency.objects.create(
+            project=project, dependency=dependency)
+
+        projectbuild = build_project(project, queue_build=False)
+        mock_policy = mock.Mock()
+
+        with mock.patch.multiple(
+                archive, get_archiver=mock.DEFAULT,
+                get_policy=mock.DEFAULT) as mock_archive:
+            mock_archive["get_policy"].return_value = mock_policy
+            archiver = get_transport_for_projectbuild(projectbuild, archive)
+
+        mock_policy.assert_called_once_with(projectbuild)
+        mock_archive["get_archiver"].return_value.assert_called_once_with(
+            mock_policy.return_value, archive)
+
+    def test_archive_projectbuild(self):
+        """
+        Archive project build should create an archiver and archive it.
+        """
+        archive = ArchiveFactory.create()
+        project = ProjectFactory.create()
+        dependency = DependencyFactory.create()
+        ProjectDependency.objects.create(
+            project=project, dependency=dependency)
+
+        projectbuild = build_project(project, queue_build=False)
+        build = BuildFactory.create(
+            job=dependency.job, build_id=projectbuild.build_id)
+        ArtifactFactory.create_batch(3, build=build)
+
+        with mock.patch.object(archive, "get_archiver") as mock_archive:
+            archive_projectbuild(projectbuild, archive)
+
+        mock_archive.return_value.return_value.assert_has_calls(
+            [mock.call.archive()])

@@ -11,6 +11,8 @@ from .factories import (
 
 class ImportBuildForJobTest(TestCase):
 
+    # TODO: Improve testing of artifacts.
+
     def test_import_build_for_job(self):
         """
         Import build for job should update the build with the details fetched
