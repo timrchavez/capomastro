@@ -103,8 +103,8 @@ class BuildProjectTest(TestCase):
             set([x.dependency for x in projectbuild_dependencies.all()]))
 
         mock_build_job.delay.assert_has_calls(
-            [mock.call(dep1.job.pk, new_build.build_id),
-             mock.call(dep2.job.pk, new_build.build_id)])
+            [mock.call(dep1.job.pk, build_id=new_build.build_id),
+             mock.call(dep2.job.pk, build_id=new_build.build_id)])
 
     def test_build_project_assigns_user_correctly(self):
         """
