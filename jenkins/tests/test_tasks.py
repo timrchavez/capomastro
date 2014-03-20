@@ -4,7 +4,7 @@ from django.test.utils import override_settings
 import mock
 from jenkinsapi import jenkins
 
-from jenkins.tasks import build_job, push_job_to_jenkins
+from jenkins.tasks import build_job, push_job_to_jenkins, import_build
 from .factories import (
     JobFactory, JenkinsServerFactory, JobTypeFactory)
 
@@ -76,8 +76,18 @@ class BuildJobTaskTest(TestCase):
 
 
 class ImportBuildTaskTest(TestCase):
-    # TODO: This needs written...
-    pass
+
+    @override_settings(CELERY_ALWAYS_EAGER=True)
+    def test_import_build(self):
+        """
+        import_build should pull the details for the build and create artifacts
+        for them.
+        """
+        job = JobFactory.create()
+        with mock.patch("jenkins.tasks.import_build_for_job") as task_mock:
+            import_build.delay(job.pk, 5)
+
+        task_mock.assert_called_once_with(job.pk, 5)
 
 
 job_xml = """
