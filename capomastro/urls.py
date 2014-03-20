@@ -3,14 +3,14 @@ from django.conf import settings
 from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
-from wooster.views import HomeView
+from capomastro.views import HomeView
 
 
 admin.autodiscover()
 
 urlpatterns = patterns('',
     # Examples:
-    # url(r'^$', 'wooster.views.home', name='home'),
+    # url(r'^$', 'capomastro.views.home', name='home'),
     # url(r'^blog/', include('blog.urls')),
     url(r'^$', HomeView.as_view(), name='home'),
     url(r'^', include('projects.urls')),

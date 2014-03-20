@@ -3,7 +3,7 @@ from django.template import Template, Context
 from django.test.client import RequestFactory
 from django.test import SimpleTestCase
 
-from wooster.site.templatetags.wooster_bootstrap import (
+from capomastro.site.templatetags.capomastro_bootstrap import (
     build_status_to_class, active_url)
 
 
@@ -15,8 +15,8 @@ class StatusToClass(SimpleTestCase):
         "ABORTED" etc to a class suitable for Bootstrap tables.
         """
         for status, class_ in [
-            ("SUCCESS", "success"), ("ABORTED", "info"),
-            ("FAILURE", "danger"), ("", "")]:
+                ("SUCCESS", "success"), ("ABORTED", "info"),
+                ("FAILURE", "danger"), ("", "")]:
             self.assertEqual(class_, build_status_to_class(status))
 
     def test_build_status_to_class_in_template(self):
@@ -24,7 +24,7 @@ class StatusToClass(SimpleTestCase):
         The build_status_to_class filter translates a Jenkins build status to a
         Bootstrap table class.
         """
-        template = Template("{% load wooster_bootstrap %}"
+        template = Template("{% load capomastro_bootstrap %}"
                             "{{ build_status|build_status_to_class }}")
         rendered = template.render(Context({"build_status": "SUCCESS"}))
         self.assertEqual("success", rendered)
@@ -59,7 +59,7 @@ class ActiveUrlTest(SimpleTestCase):
         """
         request = self.factory.get(reverse("home"))
         context = {"request": request}
-        template = Template("{% load wooster_bootstrap %}"
+        template = Template("{% load capomastro_bootstrap %}"
                             "{% active_url 'home' %}")
         rendered = template.render(Context(context))
         self.assertEqual("active", rendered)
