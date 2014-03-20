@@ -5,7 +5,8 @@ from archives.policies import ArchivePolicy, CdimageArchivePolicy
 
 
 class ArchivePolicyTest(TestCase):
-    def test_mappings_from_project_build_artifacts(self):
+
+    def test_mappings_from_projectbuild_artifacts(self):
         """
         The default archive policy should return the urls
         from the build artifacts.
@@ -19,7 +20,7 @@ class ArchivePolicyTest(TestCase):
         mock_build.get_current_artifacts.return_value = [
             mock_artifact_1, mock_artifact_2]
 
-        policy = ArchivePolicy(project_build=mock_build)
+        policy = ArchivePolicy(projectbuild=mock_build)
         mappings = policy.get_mappings()
         expected = {
             "/first/path/": "/first/path/",
@@ -29,6 +30,7 @@ class ArchivePolicyTest(TestCase):
 
 
 class CdimageArchivePolicyTest(TestCase):
+
     def test_mappings_into_cdimage_structure(self):
         """
         Artifact paths and filenames are translated into
@@ -48,7 +50,7 @@ class CdimageArchivePolicyTest(TestCase):
         mock_build.get_current_artifacts.return_value = [
             mock_artifact_1, mock_artifact_2]
 
-        policy = CdimageArchivePolicy(project_build=mock_build)
+        policy = CdimageArchivePolicy(projectbuild=mock_build)
         mappings = policy.get_mappings()
         expected = {
             "/first/path/thing.txt": "my-project/20010101.0/thing.txt",

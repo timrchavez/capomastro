@@ -1,6 +1,7 @@
+from StringIO import StringIO
+
 from django.db import models
 from paramiko.rsakey import RSAKey
-from StringIO import StringIO
 
 
 class SshKeyPair(models.Model):
@@ -11,7 +12,7 @@ class SshKeyPair(models.Model):
     public_key = models.TextField()
     private_key = models.TextField()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.label
 
     def get_pkey(self):
