@@ -1,9 +1,12 @@
 from StringIO import StringIO
 
+from django.utils.encoding import python_2_unicode_compatible
+
 from django.db import models
 from paramiko.rsakey import RSAKey
 
 
+@python_2_unicode_compatible
 class SshKeyPair(models.Model):
     """
     Only supports RSA keys at the moment.
