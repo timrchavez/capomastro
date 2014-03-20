@@ -218,10 +218,7 @@ class ProjectDependenciesView(LoginRequiredMixin, DetailView):
         """
         context = super(
             ProjectDependenciesView, self).get_context_data(**kwargs)
-        dependencies_status = []
-        dependencies = ProjectDependency.objects.filter(
-            project=context["project"])
-        header, table =  get_build_table_for_project(context["project"])
+        header, table = get_build_table_for_project(context["project"])
         context["builds_header"] = header
         context["builds_table"] = table
         return context

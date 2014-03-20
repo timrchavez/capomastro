@@ -1,8 +1,12 @@
-from django.db import models
-from paramiko.rsakey import RSAKey
 from StringIO import StringIO
 
+from django.utils.encoding import python_2_unicode_compatible
 
+from django.db import models
+from paramiko.rsakey import RSAKey
+
+
+@python_2_unicode_compatible
 class SshKeyPair(models.Model):
     """
     Only supports RSA keys at the moment.
@@ -11,7 +15,7 @@ class SshKeyPair(models.Model):
     public_key = models.TextField()
     private_key = models.TextField()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.label
 
     def get_pkey(self):

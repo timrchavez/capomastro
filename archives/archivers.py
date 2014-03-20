@@ -1,6 +1,6 @@
 import os
 import urllib2
-from time import sleep
+
 from paramiko import SSHClient, WarningPolicy
 from paramiko import SFTPClient as BaseSFTPClient
 
@@ -29,6 +29,7 @@ class Archiver(object):
         Archives a single artifact from the url to the
         destination path.
         """
+        raise NotImplemented
 
     def archive(self):
         """
@@ -43,7 +44,7 @@ class Archiver(object):
 
 
 class SFTPClient(BaseSFTPClient):
-    def stream_file_to_remote(self, fileobj, remotepath, confirm=True):
+    def stream_file_to_remote(self, fileobj, remotepath):
         """
         Reads from fileobj and streams it to a remote server over ssh.
         """
@@ -62,12 +63,9 @@ class SFTPClient(BaseSFTPClient):
                 fr.close()
         finally:
             fileobj.close()
-        if confirm:
-            s = self.stat(remotepath)
-            if s.st_size != size:
-                raise IOError("size mismatch in put! %d != %d" % (s.st_size, size))
-        else:
-            s = SFTPAttributes()
+        s = self.stat(remotepath)
+        if s.st_size != size:
+            raise IOError("size mismatch in put! %d != %d" % (s.st_size, size))
         return s
 
 
