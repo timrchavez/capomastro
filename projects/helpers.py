@@ -2,6 +2,21 @@ from jenkins.tasks import build_job
 from  projects.models import ProjectDependency
 
 
+def build_dependency(dependency, build_id=None):
+    """
+    Queues a build of the job associated with the depenency along with
+    any parameters that might be needed.
+    """
+    build_parameters = dependency.get_build_parameters()
+    kwargs = {}
+    if build_parameters:
+        kwargs["params"] = build_parameters
+    if build_id:
+        kwargs["build_id"] = build_id
+    build_job.delay(
+        dependency.job.pk, **kwargs)
+
+
 def build_project(project, user=None, dependencies=None, queue_build=True):
     """
     Given a build, schedule building each of its dependencies.
@@ -26,7 +41,7 @@ def build_project(project, user=None, dependencies=None, queue_build=True):
                   "dependency": dependency.dependency}
         ProjectBuildDependency.objects.create(**kwargs)
         if queue_build:
-            build_job.delay(dependency.dependency.job.pk, build.build_id)
+            build_dependency(dependency.dependency, build_id=build.build_id)
 
     for dependency in dependencies_not_to_build:
         kwargs = {"projectbuild": build,

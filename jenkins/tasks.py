@@ -14,7 +14,7 @@ def import_build(job_id, build_number):
 
 
 @shared_task
-def build_job(job_pk, build_id=None):
+def build_job(job_pk, build_id=None, params=None):
     """
     Request building Job.
     """
@@ -22,7 +22,8 @@ def build_job(job_pk, build_id=None):
     # WillNotBuild: <jenkinsapi.job.Job job> is already queued
     job = Job.objects.get(pk=job_pk)
     client = job.server.get_client()
-    params = {}
+    if params is None:
+        params = {}
     if build_id is not None:
         params["BUILD_ID"] = build_id
     client.build_job(job.name, params=params)
