@@ -82,4 +82,4 @@ class Artifact(models.Model):
     url = models.CharField(max_length=255)
 
     def __str__(self):
-        return "%s for %s" % (filename, build)
+        return "%s for %s" % (self.filename, self.build)

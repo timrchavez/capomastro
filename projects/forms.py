@@ -28,8 +28,8 @@ class ProjectForm(forms.ModelForm):
         dependencies_to_add = requested_dependencies - current_dependencies
 
         for dependency in dependencies_to_remove:
-            ProjectDependency.objects.get(project=project,
-                dependency=dependency).delete()
+            ProjectDependency.objects.get(
+                project=project, dependency=dependency).delete()
 
         # TODO: This probably shouldn't use the get_current_build if
         # auto_track=False
@@ -70,4 +70,3 @@ class ProjectBuildForm(forms.Form):
         error_messages={"required": "Must select at least one dependency."})
     project = forms.ModelChoiceField(
         Project.objects, required=True, widget=forms.HiddenInput)
-

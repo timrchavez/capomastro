@@ -4,13 +4,11 @@ import mock
 
 from projects.models import (
     ProjectBuild, ProjectDependency, ProjectBuildDependency)
-from credentials.models import SshKeyPair
 from projects.helpers import (
     build_project, build_dependency, archive_projectbuild,
     get_transport_for_projectbuild)
 from .factories import ProjectFactory, DependencyFactory
 from jenkins.tests.factories import BuildFactory, ArtifactFactory
-from archives.models import Archive
 from archives.tests.factories import ArchiveFactory
 
 
@@ -93,7 +91,6 @@ class BuildProjectTest(TestCase):
         project_dep1 = ProjectDependency.objects.get(
             project=project, dependency=dep1)
         self.assertEqual(build, project_dep1.current_build)
-
 
         with mock.patch("projects.helpers.build_job") as mock_build_job:
             new_build = build_project(project, dependencies=[dep1, dep2])
@@ -185,7 +182,7 @@ class ArchiveProjectBuildTest(TestCase):
                 archive, get_archiver=mock.DEFAULT,
                 get_policy=mock.DEFAULT) as mock_archive:
             mock_archive["get_policy"].return_value = mock_policy
-            archiver = get_transport_for_projectbuild(projectbuild, archive)
+            get_transport_for_projectbuild(projectbuild, archive)
 
         mock_policy.assert_called_once_with(projectbuild)
         mock_archive["get_archiver"].return_value.assert_called_once_with(

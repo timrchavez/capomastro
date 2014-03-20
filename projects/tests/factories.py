@@ -7,11 +7,11 @@ from jenkins.tests.factories import JobFactory
 
 
 class UserFactory(factory.DjangoModelFactory):
-      FACTORY_FOR = User
+    FACTORY_FOR = User
 
-      username = factory.Sequence(lambda n: "user%d" % n)
-      email = factory.Sequence(lambda n: "test%d@example.com" % n)
-      password = factory.PostGenerationMethodCall("set_password", "password")
+    username = factory.Sequence(lambda n: "user%d" % n)
+    email = factory.Sequence(lambda n: "test%d@example.com" % n)
+    password = factory.PostGenerationMethodCall("set_password", "password")
 
 
 class ProjectFactory(factory.DjangoModelFactory):
@@ -19,7 +19,6 @@ class ProjectFactory(factory.DjangoModelFactory):
 
     name = factory.Sequence(lambda n: "Project %d" % n)
     description = "This is a project."
-
 
 
 class DependencyFactory(factory.DjangoModelFactory):
