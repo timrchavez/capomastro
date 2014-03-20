@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.encoding import python_2_unicode_compatible
 
 from credentials.models import SshKeyPair
 from archives.policies import CdimageArchivePolicy
@@ -9,6 +10,7 @@ POLICIES = {"cdimage": CdimageArchivePolicy}
 ARCHIVERS = {"ssh": SshArchiver}
 
 
+@python_2_unicode_compatible
 class Archive(models.Model):
 
     name = models.CharField(max_length=64)
