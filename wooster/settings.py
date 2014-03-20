@@ -59,7 +59,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
 
 ROOT_URLCONF = 'wooster.urls'
 
-WSGI_APPLICATION = 'wooster.wsgi.application'
+WSGI_APPLICATION = 'wooster_wsgi.application'
 
 
 # Database
