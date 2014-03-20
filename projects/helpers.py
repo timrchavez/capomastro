@@ -1,6 +1,5 @@
 from jenkins.tasks import build_job
-from projects.models import ProjectDependency, ProjectBuild
-from archives.models import Archive
+from projects.models import ProjectDependency
 
 
 def build_project(project, user=None, dependencies=None, queue_build=True):
@@ -13,9 +12,9 @@ def build_project(project, user=None, dependencies=None, queue_build=True):
         project=project, requested_by=user)
 
     if dependencies:
-      filter_args = {"dependency__in": dependencies}
+        filter_args = {"dependency__in": dependencies}
     else:
-       filter_args = {}
+        filter_args = {}
 
     dependencies_to_build = ProjectDependency.objects.filter(
         project=project, **filter_args)

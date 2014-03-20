@@ -181,7 +181,7 @@ class ProjectBuildDetailTest(WebTest):
             project=project, dependency=dependency)
 
         projectbuild = build_project(project, queue_build=False)
-        build = BuildFactory.create(
+        BuildFactory.create(
             job=dependency.job, build_id=projectbuild.build_id)
 
         url = reverse(
@@ -324,7 +324,7 @@ class InitiateProjectBuildTest(WebTest):
         [dep1, dep2, dep3] = DependencyFactory.create_batch(3)
         project = ProjectFactory.create()
         for dep in [dep1, dep2, dep3]:
-            dependency = ProjectDependency.objects.create(
+            ProjectDependency.objects.create(
                 project=project, dependency=dep)
         url = reverse(
             "project_initiate_projectbuild", kwargs={"pk": project.pk})
@@ -432,7 +432,8 @@ class ProjectUpdateTest(WebTest):
             form["dependencies"].value)
         self.assertEqual(project.name, form["name"].value)
 
-        form["dependencies"].select_multiple([projectdependency2.dependency.pk])
+        form["dependencies"].select_multiple(
+            [projectdependency2.dependency.pk])
         form.submit().follow()
 
         self.assertEqual(1, len(project.dependencies.all()))
@@ -451,17 +452,18 @@ class ProjectDependenciesTest(WebTest):
 
     def test_project_dependencies(self):
         """
-        Project Dependencies view should show all dependencies and the status of
-        their build.
+        Project Dependencies view should show all dependencies and the status
+        of their build.
         """
         project = ProjectFactory.create()
         dependency = DependencyFactory.create()
         builds = BuildFactory.create_batch(5, job=dependency.job)
-        projectdependency = ProjectDependency.objects.create(
+        ProjectDependency.objects.create(
             project=project, dependency=dependency, auto_track=False,
             current_build=builds[-1])
 
-        project_url = reverse("project_dependencies", kwargs={"pk": project.pk})
+        project_url = reverse(
+            "project_dependencies", kwargs={"pk": project.pk})
         response = self.app.get(project_url, user="testing")
         self.assertEqual(200, response.status_code)
         self.assertEqual(project, response.context["project"])

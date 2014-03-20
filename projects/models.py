@@ -11,6 +11,7 @@ from jenkins.models import Job, Build, Artifact
 # Signals
 projectbuild_finished = Signal(providing_args=["projectbuild"])
 
+
 @python_2_unicode_compatible
 class Dependency(models.Model):
 
@@ -180,7 +181,7 @@ def handle_builds_for_projectbuild(sender, created, instance, **kwargs):
 
             build_statuses = ProjectBuildDependency.objects.filter(
                 projectbuild=dependency.projectbuild).values(
-                    "build__status", "build__phase")
+                "build__status", "build__phase")
 
             statuses = set([x["build__status"] for x in build_statuses])
             phases = set([x["build__phase"] for x in build_statuses])
