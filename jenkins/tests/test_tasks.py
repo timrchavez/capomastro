@@ -114,12 +114,41 @@ class CreateJobTaskTest(TestCase):
         with mock.patch(
                 "jenkins.models.Jenkins",
                 spec=jenkins.Jenkins) as mock_jenkins:
+            mock_jenkins.return_value.has_job.return_value = False
             push_job_to_jenkins(job.pk)
 
         mock_jenkins.assert_called_with(
             job.server.url, username=u"root", password=u"testing")
+        mock_jenkins.return_value.has_job.assert_called_with("testing")
         mock_jenkins.return_value.create_job.assert_called_with(
             "testing",
+            job_xml.replace(
+                "{{ notifications_url }}",
+                "http://example.com/jenkins/notifications/").strip())
+
+    @override_settings(
+        CELERY_ALWAYS_EAGER=True, NOTIFICATION_HOST="http://example.com")
+    def test_push_job_to_jenkins_with_already_existing_job(self):
+        """
+        If the jobname specified already exists in Jenkins, then we can assume
+        we're updating the Job's config.xml.
+        """
+        jobtype = JobTypeFactory.create(config_xml=job_xml)
+        job = JobFactory.create(jobtype=jobtype, name="testing")
+        mock_apijob = mock.Mock()
+
+        with mock.patch(
+                "jenkins.models.Jenkins",
+                spec=jenkins.Jenkins) as mock_jenkins:
+            mock_jenkins.return_value.has_job.return_value = True
+            mock_jenkins.return_value.get_job.return_value = mock_apijob
+            push_job_to_jenkins(job.pk)
+
+        mock_jenkins.assert_called_with(
+            job.server.url, username=u"root", password=u"testing")
+
+        mock_jenkins.return_value.has_job.assert_called_with("testing")
+        mock_apijob.update_config.assert_called_with(
             job_xml.replace(
                 "{{ notifications_url }}",
                 "http://example.com/jenkins/notifications/").strip())
