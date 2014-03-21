@@ -6,6 +6,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from jenkins.models import JenkinsServer
+from jenkins.management.helpers import verify_jenkinsserver
 
 
 def list_servers(stdout):
@@ -20,15 +21,25 @@ def list_servers(stdout):
         stdout.write("No servers")
 
 
+def verify_server(name, stdout):
+    try:
+        server = JenkinsServer.objects.get(name=name)
+        messages = verify_jenkinsserver(server)
+        if not messages:
+            stdout.write("Server at %s verifies ok." % server.url)
+        else:
+            stdout.write("\n".join(messages))
+    except JenkinsServer.DoesNotExist:
+        stdout.write("Could not find server %s" % name)
+
 class Command(BaseCommand):
     help = "Jenkins server management"
 
-    # option_list = BaseCommand.option_list + (
-    #     make_option(
-    #         "-j", dest="job_id",
-    #         help="Job Id to process"),)
-
+    # TODO: This needs a rework to make the commands available through the help
+    # etc.
     def handle(self, command, *args, **options):
-        if command == 'list':
+        if command == "list":
             list_servers(self.stdout)
+        elif command == "verify":
+            verify_server(args[0], self.stdout)
         transaction.commit_unless_managed()
