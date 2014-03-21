@@ -1,8 +1,8 @@
-wooster
-=======
-Jenkins best friend...soon to become Leeroy.
+capomastro
+==========
+Master builder
 
-Wooster manages build dependencies built using Jenkins.
+Capomastro manages build dependencies built using Jenkins.
 
 Multiple "Projects" can share common dependencies, and the artifact details are
 pulled into the database where they can easily be download, or archived.
@@ -14,7 +14,7 @@ To get started...
 2. `pip install -r requirements.txt` (or dev-requirements.txt if you're going
    to run the tests)
 
-3. Copy the `wooster/local_settings.py.example` to `wooster/local_settings.py`
+3. Copy the `capomastro/local_settings.py.example` to `capomastro/local_settings.py`
    and fixup the database entry
 
 4. You'll need to setup the database `./manage.py syncdb --migrate` - you'll be
@@ -32,8 +32,8 @@ runserver.
 
 You'll need a celery worker running as well as rabbitmq.
 
-$ gunicorn -b 0.0.0.0:8000 wooster.wsgi:application
-$ celery -A wooster worker -l info
+$ gunicorn -b 0.0.0.0:8000 capomastro.wsgi:application
+$ celery -A capomastro worker -l info
 
 5. You'll need an initial jenkins.JenkinsServer object, with the correct credentials,
    and the REMOTE_ADDR setup correctly, so that it can receive callbacks.

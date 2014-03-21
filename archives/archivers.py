@@ -1,4 +1,6 @@
+import os
 import urllib2
+
 from paramiko import SSHClient, WarningPolicy
 from paramiko import SFTPClient as BaseSFTPClient
 
@@ -27,6 +29,7 @@ class Archiver(object):
         Archives a single artifact from the url to the
         destination path.
         """
+        raise NotImplemented
 
     def archive(self):
         """
@@ -41,7 +44,7 @@ class Archiver(object):
 
 
 class SFTPClient(BaseSFTPClient):
-    def stream_file_to_remote(self, fileobj, remotepath, confirm=True):
+    def stream_file_to_remote(self, fileobj, remotepath):
         """
         Reads from fileobj and streams it to a remote server over ssh.
         """
@@ -60,12 +63,9 @@ class SFTPClient(BaseSFTPClient):
                 fr.close()
         finally:
             fileobj.close()
-        if confirm:
-            s = self.stat(remotepath)
-            if s.st_size != size:
-                raise IOError("size mismatch in put! %d != %d" % (s.st_size, size))
-        else:
-            s = SFTPAttributes()
+        s = self.stat(remotepath)
+        if s.st_size != size:
+            raise IOError("size mismatch in put! %d != %d" % (s.st_size, size))
         return s
 
 
@@ -97,7 +97,10 @@ class SshArchiver(Archiver):
         Uploads the artifact_url to the destination on
         the remote server, underneath the target's basedir.
         """
-        destination = "%s/%s" % (self.target.basedir, destination)
-        self.ssh_client.exec_command("mkdir -p `dirname %s`" % destination)
+        destination = os.path.join(self.target.basedir, destination)
+        _, stdout, _ = self.ssh_client.exec_command(
+            "mkdir -p `dirname %s`" % destination)
+        # TODO: raise exception if the command fails
+        _ = stdout.channel.recv_exit_status()  # noqa
         artifact = urllib2.urlopen(artifact_url)
         self.sftp_client.stream_file_to_remote(artifact, destination)

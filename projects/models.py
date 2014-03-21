@@ -3,20 +3,22 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver, Signal
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.utils.encoding import python_2_unicode_compatible
 
 from jenkins.models import Job, Build, Artifact
-from archives.models import TRANSPORTS, POLICIES
 
 
 # Signals
 projectbuild_finished = Signal(providing_args=["projectbuild"])
 
 
+@python_2_unicode_compatible
 class Dependency(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
     job = models.ForeignKey(Job, null=True)
     description = models.TextField(null=True, blank=True)
+    parameters = models.TextField(null=True, blank=True)
 
     class Meta:
         verbose_name_plural = "dependencies"
@@ -33,7 +35,24 @@ class Dependency(models.Model):
             if finished_builds.count() > 0:
                 return finished_builds.order_by("-number")[0]
 
+    def get_build_parameters(self):
+        """
+        Return the parameters property parsed into a dictionary of "build"
+        parameters.
 
+        If we have no parameters, we should get None back.
+        """
+        if not self.parameters:
+            return
+        build_parameters = {}
+        keyvalues = self.parameters.split("\n")
+        for keyvalue in keyvalues:
+            key, value = keyvalue.split("=")
+            build_parameters[key.strip()] = value.strip()
+        return build_parameters
+
+
+@python_2_unicode_compatible
 class ProjectDependency(models.Model):
     """
     Represents the build of a dependency used by a project.
@@ -60,6 +79,7 @@ class ProjectDependency(models.Model):
             self.dependency, self.project, self.auto_track)
 
 
+@python_2_unicode_compatible
 class Project(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
@@ -82,6 +102,7 @@ class Project(models.Model):
         return self.name
 
 
+@python_2_unicode_compatible
 class ProjectBuildDependency(models.Model):
     """
     Represents one of the dependencies of a particular Projet Build.
@@ -98,6 +119,7 @@ class ProjectBuildDependency(models.Model):
             self.dependency.name, self.projectbuild.build_id)
 
 
+@python_2_unicode_compatible
 class ProjectBuild(models.Model):
     """Represents a requested build of a Project."""
 
@@ -122,15 +144,6 @@ class ProjectBuild(models.Model):
         project build.
         """
         return Artifact.objects.filter(build__build_id=self.build_id)
-
-    def get_archiver(self, archive_target):
-        """
-        Passed an Archive, returns a contructed Archiver.
-        """
-        policy = POLICIES[archive_target.policy](self)
-        archiver = TRANSPORTS[archive_target.transport](
-            policy, archive_target)
-        return archiver
 
     def save(self, **kwargs):
         if not self.pk:
@@ -185,7 +198,7 @@ def handle_builds_for_projectbuild(sender, created, instance, **kwargs):
 
             build_statuses = ProjectBuildDependency.objects.filter(
                 projectbuild=dependency.projectbuild).values(
-                    "build__status", "build__phase")
+                "build__status", "build__phase")
 
             statuses = set([x["build__status"] for x in build_statuses])
             phases = set([x["build__phase"] for x in build_statuses])

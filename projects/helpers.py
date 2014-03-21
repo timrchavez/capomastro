@@ -1,5 +1,20 @@
 from jenkins.tasks import build_job
-from  projects.models import ProjectDependency
+from projects.models import ProjectDependency
+
+
+def build_dependency(dependency, build_id=None):
+    """
+    Queues a build of the job associated with the depenency along with
+    any parameters that might be needed.
+    """
+    build_parameters = dependency.get_build_parameters()
+    kwargs = {}
+    if build_parameters:
+        kwargs["params"] = build_parameters
+    if build_id:
+        kwargs["build_id"] = build_id
+    build_job.delay(
+        dependency.job.pk, **kwargs)
 
 
 def build_project(project, user=None, dependencies=None, queue_build=True):
@@ -12,9 +27,9 @@ def build_project(project, user=None, dependencies=None, queue_build=True):
         project=project, requested_by=user)
 
     if dependencies:
-      filter_args = {"dependency__in": dependencies}
+        filter_args = {"dependency__in": dependencies}
     else:
-       filter_args = {}
+        filter_args = {}
 
     dependencies_to_build = ProjectDependency.objects.filter(
         project=project, **filter_args)
@@ -26,7 +41,7 @@ def build_project(project, user=None, dependencies=None, queue_build=True):
                   "dependency": dependency.dependency}
         ProjectBuildDependency.objects.create(**kwargs)
         if queue_build:
-            build_job.delay(dependency.dependency.job.pk, build.build_id)
+            build_dependency(dependency.dependency, build_id=build.build_id)
 
     for dependency in dependencies_not_to_build:
         kwargs = {"projectbuild": build,
@@ -34,3 +49,23 @@ def build_project(project, user=None, dependencies=None, queue_build=True):
                   "build": dependency.current_build}
         ProjectBuildDependency.objects.create(**kwargs)
     return build
+
+
+def get_transport_for_projectbuild(projectbuild, archive):
+    """
+    Returns a transport for a projectbuild to be archived to a specific
+    archive.
+    """
+    policy = archive.get_policy()(projectbuild)
+    transport = archive.get_archiver()(policy, archive)
+    return transport
+
+
+def archive_projectbuild(projectbuild, archive):
+    """
+    Archives the artifacts for a projectbuild.
+
+    Requires a projectbuild and a destination archive.
+    """
+    transport = get_transport_for_projectbuild(projectbuild, archive)
+    transport.archive()

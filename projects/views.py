@@ -9,12 +9,11 @@ from braces.views import (
     LoginRequiredMixin, PermissionRequiredMixin, FormValidMessageMixin)
 
 from jenkins.models import Build
-from jenkins.tasks import build_job
 from projects.models import (
     Project, Dependency, ProjectDependency, ProjectBuild,
     ProjectBuildDependency)
 from projects.forms import ProjectForm, DependencyForm, ProjectBuildForm
-from projects.helpers import build_project
+from projects.helpers import build_project, build_dependency
 from projects.utils import get_build_table_for_project
 
 
@@ -193,7 +192,7 @@ class DependencyDetailView(LoginRequiredMixin, DetailView):
         """
         """
         dependency = get_object_or_404(Dependency, pk=pk)
-        build_job.delay(dependency.job.pk)
+        build_dependency(dependency)
         messages.add_message(
             self.request, messages.INFO,
             "Build for '%s' queued." % dependency.name)
@@ -219,10 +218,7 @@ class ProjectDependenciesView(LoginRequiredMixin, DetailView):
         """
         context = super(
             ProjectDependenciesView, self).get_context_data(**kwargs)
-        dependencies_status = []
-        dependencies = ProjectDependency.objects.filter(
-            project=context["project"])
-        header, table =  get_build_table_for_project(context["project"])
+        header, table = get_build_table_for_project(context["project"])
         context["builds_header"] = header
         context["builds_table"] = table
         return context

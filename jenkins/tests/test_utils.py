@@ -57,6 +57,7 @@ class DefaultSettingsTest(SimpleTestCase):
 
 class GetContextForTemplate(SimpleTestCase):
 
+    @override_settings(NOTIFICATION_HOST="http://example.com")
     def test_get_context_for_template(self):
         """
         get_context_for_template should return a Context object with details
@@ -68,7 +69,7 @@ class GetContextForTemplate(SimpleTestCase):
 
         self.assertEqual(job, context.get("job"))
         self.assertEqual(
-            "http://localhost/jenkins/notifications/",
+            "http://example.com/jenkins/notifications/",
             context.get("notifications_url"))
 
 template_config = """

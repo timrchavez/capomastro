@@ -1,8 +1,10 @@
 from django.db import models
+from django.utils.encoding import python_2_unicode_compatible
 
 from jenkinsapi.jenkins import Jenkins
 
 
+@python_2_unicode_compatible
 class JenkinsServer(models.Model):
 
     name = models.CharField(max_length=255, unique=True)
@@ -25,6 +27,7 @@ class JenkinsServer(models.Model):
             self.url, username=self.username, password=self.password)
 
 
+@python_2_unicode_compatible
 class JobType(models.Model):
     """
     Used as a model for creating new Jenkins jobs.
@@ -38,6 +41,7 @@ class JobType(models.Model):
         return self.name
 
 
+@python_2_unicode_compatible
 class Job(models.Model):
 
     server = models.ForeignKey(JenkinsServer)
@@ -51,6 +55,7 @@ class Job(models.Model):
         return self.name
 
 
+@python_2_unicode_compatible
 class Build(models.Model):
 
     job = models.ForeignKey(Job)
@@ -60,6 +65,7 @@ class Build(models.Model):
     url = models.CharField(max_length=255)
     phase = models.CharField(max_length=25)  # FINISHED, STARTED, COMPLETED
     status = models.CharField(max_length=255)
+    console_log = models.TextField(blank=True, null=True)
 
     class Meta:
         ordering = ["-number"]
@@ -68,8 +74,12 @@ class Build(models.Model):
         return self.build_id
 
 
+@python_2_unicode_compatible
 class Artifact(models.Model):
 
     build = models.ForeignKey(Build)
     filename = models.CharField(max_length=255)
     url = models.CharField(max_length=255)
+
+    def __str__(self):
+        return "%s for %s" % (self.filename, self.build)

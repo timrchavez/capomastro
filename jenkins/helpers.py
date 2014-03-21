@@ -24,9 +24,10 @@ def import_build_for_job(job_pk, build_number):
         # Discard? or only set it if we don't have one?
         # "build_id": build_result._data["id"],
         "duration": build_result._data["duration"],
-        "url": build_result.get_result_url()
+        "url": build_result.get_result_url(),
+        "console_log": build_result.get_console(),
     }
-    logging.info("%s" % build_details)
+    logging.info("Processing build details for %s #%d" % (job, build_number))
     Build.objects.filter(job=job, number=build_number).update(**build_details)
     build = Build.objects.get(job=job, number=build_number)
     for artifact in build_result.get_artifacts():

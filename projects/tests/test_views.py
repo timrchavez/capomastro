@@ -181,7 +181,7 @@ class ProjectBuildDetailTest(WebTest):
             project=project, dependency=dependency)
 
         projectbuild = build_project(project, queue_build=False)
-        build = BuildFactory.create(
+        BuildFactory.create(
             job=dependency.job, build_id=projectbuild.build_id)
 
         url = reverse(
@@ -252,6 +252,7 @@ class DependencyCreateTest(WebTest):
         form["jobtype"].select(self.jobtype.pk)
         form["server"].select(self.server.pk)
         form["name"].value = "My Dependency"
+        form["parameters"].value = "MYVALUE=this is a test\nNEWVALUE=testing"
 
         with mock.patch("projects.forms.push_job_to_jenkins") as job_mock:
             response = form.submit().follow()
@@ -260,6 +261,9 @@ class DependencyCreateTest(WebTest):
         job = Job.objects.get(jobtype=self.jobtype, server=self.server)
         job_mock.delay.assert_called_once_with(job.pk)
         self.assertEqual(new_dependency.job, job)
+        self.assertEqual(
+            "MYVALUE=this is a test\nNEWVALUE=testing",
+            new_dependency.parameters)
 
 
 class DependencyDetailTest(WebTest):
@@ -295,14 +299,37 @@ class DependencyDetailTest(WebTest):
         url = reverse("dependency_detail", kwargs={"pk": dependency.pk})
         response = self.app.get(url, user="testing")
 
-        with mock.patch("projects.views.build_job") as build_job_mock:
+        with mock.patch("projects.helpers.build_job") as build_job_mock:
             response = response.forms["build-dependency"].submit().follow()
 
         self.assertEqual(dependency, response.context["dependency"])
         self.assertEqual([project], list(response.context["projects"]))
         self.assertContains(
             response, "Build for '%s' queued." % dependency.name)
-        build_job_mock.delay.assert_called_once_with(dependency.job.pk)
+        build_job_mock.delay.assert_called_once_with(
+            dependency.job.pk)
+
+    def test_dependency_build_with_parameters(self):
+        """
+        If the dependency we're building has parameters, these should be passed
+        with the job queue.
+        """
+        dependency = DependencyFactory.create(parameters="TESTPARAMETER=500")
+        project = ProjectFactory.create()
+        ProjectDependency.objects.create(
+            project=project, dependency=dependency)
+        url = reverse("dependency_detail", kwargs={"pk": dependency.pk})
+        response = self.app.get(url, user="testing")
+
+        with mock.patch("projects.helpers.build_job") as build_job_mock:
+            response = response.forms["build-dependency"].submit().follow()
+
+        self.assertEqual(dependency, response.context["dependency"])
+        self.assertEqual([project], list(response.context["projects"]))
+        self.assertContains(
+            response, "Build for '%s' queued." % dependency.name)
+        build_job_mock.delay.assert_called_once_with(
+            dependency.job.pk, params={"TESTPARAMETER": "500"})
 
 
 class InitiateProjectBuildTest(WebTest):
@@ -324,7 +351,7 @@ class InitiateProjectBuildTest(WebTest):
         [dep1, dep2, dep3] = DependencyFactory.create_batch(3)
         project = ProjectFactory.create()
         for dep in [dep1, dep2, dep3]:
-            dependency = ProjectDependency.objects.create(
+            ProjectDependency.objects.create(
                 project=project, dependency=dep)
         url = reverse(
             "project_initiate_projectbuild", kwargs={"pk": project.pk})
@@ -341,9 +368,9 @@ class InitiateProjectBuildTest(WebTest):
         projectbuild = response.context["projectbuild"]
 
         build_job_mock.delay.assert_has_calls([
-            mock.call(dep1.job.pk, projectbuild.build_id),
-            mock.call(dep2.job.pk, projectbuild.build_id),
-            mock.call(dep3.job.pk, projectbuild.build_id)])
+            mock.call(dep1.job.pk, build_id=projectbuild.build_id),
+            mock.call(dep2.job.pk, build_id=projectbuild.build_id),
+            mock.call(dep3.job.pk, build_id=projectbuild.build_id)])
         self.assertContains(
             response, "Build '%s' queued." % projectbuild.build_id)
 
@@ -369,8 +396,8 @@ class InitiateProjectBuildTest(WebTest):
         projectbuild = response.context["projectbuild"]
 
         build_job_mock.delay.assert_has_calls([
-            mock.call(dep1.job.pk, projectbuild.build_id),
-            mock.call(dep3.job.pk, projectbuild.build_id)])
+            mock.call(dep1.job.pk, build_id=projectbuild.build_id),
+            mock.call(dep3.job.pk, build_id=projectbuild.build_id)])
 
     def test_project_build_form_requires_selection(self):
         """
@@ -432,7 +459,8 @@ class ProjectUpdateTest(WebTest):
             form["dependencies"].value)
         self.assertEqual(project.name, form["name"].value)
 
-        form["dependencies"].select_multiple([projectdependency2.dependency.pk])
+        form["dependencies"].select_multiple(
+            [projectdependency2.dependency.pk])
         form.submit().follow()
 
         self.assertEqual(1, len(project.dependencies.all()))
@@ -451,17 +479,18 @@ class ProjectDependenciesTest(WebTest):
 
     def test_project_dependencies(self):
         """
-        Project Dependencies view should show all dependencies and the status of
-        their build.
+        Project Dependencies view should show all dependencies and the status
+        of their build.
         """
         project = ProjectFactory.create()
         dependency = DependencyFactory.create()
         builds = BuildFactory.create_batch(5, job=dependency.job)
-        projectdependency = ProjectDependency.objects.create(
+        ProjectDependency.objects.create(
             project=project, dependency=dependency, auto_track=False,
             current_build=builds[-1])
 
-        project_url = reverse("project_dependencies", kwargs={"pk": project.pk})
+        project_url = reverse(
+            "project_dependencies", kwargs={"pk": project.pk})
         response = self.app.get(project_url, user="testing")
         self.assertEqual(200, response.status_code)
         self.assertEqual(project, response.context["project"])

@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.test.utils import override_settings
 
 import mock
 import jenkinsapi.job
@@ -11,6 +12,9 @@ from .factories import (
 
 class ImportBuildForJobTest(TestCase):
 
+    # TODO: Improve testing of artifacts.
+
+    @override_settings(NOTIFICATION_HOST="http://example.com")
     def test_import_build_for_job(self):
         """
         Import build for job should update the build with the details fetched
@@ -26,6 +30,7 @@ class ImportBuildForJobTest(TestCase):
 
         mock_build.get_status.return_value = "SUCCESS"
         mock_build.get_result_url.return_value = "http://localhost/123"
+        mock_build.get_console.return_value = "This is the log"
         mock_build.get_artifacts.return_value = []
 
         with mock.patch("jenkins.helpers.logging") as mock_logging:
@@ -39,19 +44,20 @@ class ImportBuildForJobTest(TestCase):
         mock_logging.assert_has_calls(
             [mock.call.info("Located job %s\n" % job),
              mock.call.info("Using server at %s\n" % job.server.url),
-             mock.call.info("{'status': 'SUCCESS', 'duration': 1000, 'url': 'http://localhost/123'}")])
+             mock.call.info("Processing build details for %s #5" % job)])
 
         build = Build.objects.get(pk=build.pk)
         self.assertEqual(1000, build.duration)
         self.assertEqual("SUCCESS", build.status)
+        self.assertEqual("This is the log", build.console_log)
 
 
 class CreateJobTest(TestCase):
 
     def test_create_job(self):
         """
-        Create job should instantiate a job associated with a server generate a
-        name for the job.
+        Create job should instantiate a job associated with a server and
+        generate a name for the job.
         """
         jobtype = JobTypeFactory.create()
         server = JenkinsServerFactory.create()

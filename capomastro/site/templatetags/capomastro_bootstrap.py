@@ -7,7 +7,9 @@ register = Library()
 
 @register.filter(is_safe=True)
 def build_status_to_class(value):
-    """Converts a known build status from Jenkins to a bootstrap table class."""
+    """
+    Converts a known build status from Jenkins to a bootstrap table class.
+    """
     known_statuses = {
         "SUCCESS": "success",
         "FAILURE": "danger",
@@ -22,4 +24,3 @@ def active_url(context, path):
         return "active"
     else:
         return ""
-
