@@ -102,7 +102,8 @@ job_xml = """
 
 class CreateJobTaskTest(TestCase):
 
-    @override_settings(CELERY_ALWAYS_EAGER=True)
+    @override_settings(
+        CELERY_ALWAYS_EAGER=True, NOTIFICATION_HOST="http://example.com")
     def test_push_job_to_jenkins(self):
         """
         The push_job_to_jenkins task should find the associated server, and
@@ -121,4 +122,4 @@ class CreateJobTaskTest(TestCase):
             "testing",
             job_xml.replace(
                 "{{ notifications_url }}",
-                "http://localhost/jenkins/notifications/").strip())
+                "http://example.com/jenkins/notifications/").strip())
