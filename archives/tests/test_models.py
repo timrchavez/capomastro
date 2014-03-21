@@ -1,6 +1,5 @@
 from django.test import TestCase
 
-from credentials.models import SshKeyPair
 from archives.models import Archive
 from archives.policies import CdimageArchivePolicy
 from archives.archivers import SshArchiver

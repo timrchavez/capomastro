@@ -66,7 +66,7 @@ class SshArchiverTest(TestCase):
         with mock.patch("archives.archivers.SSHClient") as mock_client:
             with mock.patch("archives.archivers.SFTPClient") as mock_sftp:
                 with mock.patch("archives.archivers.urllib2") as mock_urllib2:
-                    with mock.patch("archives.archivers.WarningPolicy") as mock_hostpolicy:
+                    with mock.patch("archives.archivers.WarningPolicy") as mock_hostpolicy:  # noqa
                         manager.attach_mock(mock_client, "client")
                         manager.attach_mock(mock_sftp, "sftp")
                         manager.attach_mock(mock_urllib2, "urllib2")
@@ -75,7 +75,7 @@ class SshArchiverTest(TestCase):
                         mock_hostpolicy.return_value = manager.hostpolicy
                         mock_client.return_value.exec_command.return_value = (
                             None, mock.Mock(), None)
-                        mock_client.return_value.get_transport.return_value = "TRANSPORT"
+                        mock_client.return_value.get_transport.return_value = "TRANSPORT"  # noqa
                         archiver = SshArchiver(policy, target)
                         archiver.archive()
 

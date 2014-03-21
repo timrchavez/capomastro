@@ -4,8 +4,7 @@ from django.core.urlresolvers import reverse
 from projects.helpers import build_project
 from projects.templatetags.projects_tags import build_url
 from projects.models import ProjectDependency
-from projects.tests.factories import (
-    ProjectFactory, DependencyFactory, ProjectBuildFactory)
+from projects.tests.factories import ProjectFactory, DependencyFactory
 from jenkins.tests.factories import BuildFactory
 
 

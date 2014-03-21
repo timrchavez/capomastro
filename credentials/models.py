@@ -22,4 +22,5 @@ class SshKeyPair(models.Model):
         """
         Returns an RSAKey for use with paramiko SSHClient.
         """
-        return RSAKey(data=self.public_key, file_obj=StringIO(self.private_key))
+        return RSAKey(data=self.public_key,
+                      file_obj=StringIO(self.private_key))

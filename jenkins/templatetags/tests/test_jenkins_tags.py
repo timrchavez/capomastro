@@ -14,12 +14,13 @@ class BuildTimeToTimeDeltaTest(SimpleTestCase):
         build_time_to_timedelta should return a timedelta for the millseconds
         that the build took.
         """
-        self.assertEqual(timedelta(milliseconds=331), build_time_to_timedelta(331))
+        self.assertEqual(timedelta(milliseconds=331),
+                         build_time_to_timedelta(331))
 
     def test_build_time_to_timedelta_with_no_time(self):
         """
-        If the build time is None (hasn't completed) then we should get an empty
-        srtring back.
+        If the build time is None (hasn't completed) then we should get an
+        empty string back.
         """
         self.assertEqual("", build_time_to_timedelta(None))
 
