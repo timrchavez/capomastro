@@ -36,9 +36,7 @@ To get Capomastro up and running:
 
     If you need help with the settings, please see the [Django documentation](https://docs.djangoproject.com/en/1.6/ref/settings/#databases)
 
-    You will need to set the `NOTIFICATION_HOST` to a valid URL to access
-    your Capomastro instance, Jenkins will callback to this URL to notify the
-    application of build status.
+You will need to set the `NOTIFICATION_HOST` to a valid URL to access your Capomastro instance, Jenkins will callback to this URL to notify the application of build status.
 
 6\. You can now create the database and superuser.
 
