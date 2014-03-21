@@ -252,6 +252,7 @@ class DependencyCreateTest(WebTest):
         form["jobtype"].select(self.jobtype.pk)
         form["server"].select(self.server.pk)
         form["name"].value = "My Dependency"
+        form["parameters"].value = "MYVALUE=this is a test\nNEWVALUE=testing"
 
         with mock.patch("projects.forms.push_job_to_jenkins") as job_mock:
             response = form.submit().follow()
@@ -260,6 +261,9 @@ class DependencyCreateTest(WebTest):
         job = Job.objects.get(jobtype=self.jobtype, server=self.server)
         job_mock.delay.assert_called_once_with(job.pk)
         self.assertEqual(new_dependency.job, job)
+        self.assertEqual(
+            "MYVALUE=this is a test\nNEWVALUE=testing",
+            new_dependency.parameters)
 
 
 class DependencyDetailTest(WebTest):
@@ -295,14 +299,37 @@ class DependencyDetailTest(WebTest):
         url = reverse("dependency_detail", kwargs={"pk": dependency.pk})
         response = self.app.get(url, user="testing")
 
-        with mock.patch("projects.views.build_job") as build_job_mock:
+        with mock.patch("projects.helpers.build_job") as build_job_mock:
             response = response.forms["build-dependency"].submit().follow()
 
         self.assertEqual(dependency, response.context["dependency"])
         self.assertEqual([project], list(response.context["projects"]))
         self.assertContains(
             response, "Build for '%s' queued." % dependency.name)
-        build_job_mock.delay.assert_called_once_with(dependency.job.pk)
+        build_job_mock.delay.assert_called_once_with(
+            dependency.job.pk)
+
+    def test_dependency_build_with_parameters(self):
+        """
+        If the dependency we're building has parameters, these should be passed
+        with the job queue.
+        """
+        dependency = DependencyFactory.create(parameters="TESTPARAMETER=500")
+        project = ProjectFactory.create()
+        ProjectDependency.objects.create(
+            project=project, dependency=dependency)
+        url = reverse("dependency_detail", kwargs={"pk": dependency.pk})
+        response = self.app.get(url, user="testing")
+
+        with mock.patch("projects.helpers.build_job") as build_job_mock:
+            response = response.forms["build-dependency"].submit().follow()
+
+        self.assertEqual(dependency, response.context["dependency"])
+        self.assertEqual([project], list(response.context["projects"]))
+        self.assertContains(
+            response, "Build for '%s' queued." % dependency.name)
+        build_job_mock.delay.assert_called_once_with(
+            dependency.job.pk, params={"TESTPARAMETER": "500"})
 
 
 class InitiateProjectBuildTest(WebTest):
@@ -341,9 +368,9 @@ class InitiateProjectBuildTest(WebTest):
         projectbuild = response.context["projectbuild"]
 
         build_job_mock.delay.assert_has_calls([
-            mock.call(dep1.job.pk, projectbuild.build_id),
-            mock.call(dep2.job.pk, projectbuild.build_id),
-            mock.call(dep3.job.pk, projectbuild.build_id)])
+            mock.call(dep1.job.pk, build_id=projectbuild.build_id),
+            mock.call(dep2.job.pk, build_id=projectbuild.build_id),
+            mock.call(dep3.job.pk, build_id=projectbuild.build_id)])
         self.assertContains(
             response, "Build '%s' queued." % projectbuild.build_id)
 
@@ -369,8 +396,8 @@ class InitiateProjectBuildTest(WebTest):
         projectbuild = response.context["projectbuild"]
 
         build_job_mock.delay.assert_has_calls([
-            mock.call(dep1.job.pk, projectbuild.build_id),
-            mock.call(dep3.job.pk, projectbuild.build_id)])
+            mock.call(dep1.job.pk, build_id=projectbuild.build_id),
+            mock.call(dep3.job.pk, build_id=projectbuild.build_id)])
 
     def test_project_build_form_requires_selection(self):
         """
