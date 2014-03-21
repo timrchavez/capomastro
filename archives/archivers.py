@@ -101,6 +101,6 @@ class SshArchiver(Archiver):
         _, stdout, _ = self.ssh_client.exec_command(
             "mkdir -p `dirname %s`" % destination)
         # TODO: raise exception if the command fails
-        _ = stdout.channel.recv_exit_status()
+        _ = stdout.channel.recv_exit_status()  # noqa
         artifact = urllib2.urlopen(artifact_url)
         self.sftp_client.stream_file_to_remote(artifact, destination)

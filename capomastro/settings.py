@@ -96,6 +96,6 @@ STATICFILES_DIRS = (
 
 
 try:
-     from local_settings import *
+    from local_settings import *  # noqa
 except ImportError, e:
-     pass
+    pass
