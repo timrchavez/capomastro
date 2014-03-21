@@ -1,5 +1,5 @@
 """
-Django settings for wooster project.
+Django settings for capomastro project.
 
 For more information on this file, see
 https://docs.djangoproject.com/en/1.6/topics/settings/
@@ -33,7 +33,7 @@ INSTALLED_APPS = (
     'projects',
     'credentials',
     'archives',
-    'wooster.site'
+    'capomastro.site'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -57,9 +57,9 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.contrib.messages.context_processors.messages'
 )
 
-ROOT_URLCONF = 'wooster.urls'
+ROOT_URLCONF = 'capomastro.urls'
 
-WSGI_APPLICATION = 'wooster.wsgi.application'
+WSGI_APPLICATION = 'capomastro.wsgi.application'
 
 
 # Database
@@ -88,14 +88,14 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 TEMPLATE_DIRS = (
-    os.path.join(BASE_DIR, 'wooster', 'templates'),
+    os.path.join(BASE_DIR, 'capomastro', 'templates'),
 )
 STATICFILES_DIRS = (
-    os.path.join(BASE_DIR, 'wooster', 'static'),
+    os.path.join(BASE_DIR, 'capomastro', 'static'),
 )
 
 
 try:
-     from local_settings import *
+    from local_settings import *  # noqa
 except ImportError, e:
-     pass
+    pass

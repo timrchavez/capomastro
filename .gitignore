@@ -39,7 +39,7 @@ nosetests.xml
 db.sqlite3
 
 # Local settings
-wooster/local_settings.py
+capomastro/local_settings.py
 
 # devenv
 devenv
