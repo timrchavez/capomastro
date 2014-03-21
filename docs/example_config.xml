@@ -1,0 +1,46 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>{{ description }}</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <com.tikal.hudson.plugins.notification.HudsonNotificationProperty plugin="notification@1.5">
+      <endpoints>
+        <com.tikal.hudson.plugins.notification.Endpoint>
+          <protocol>HTTP</protocol>
+          <format>JSON</format>
+          <url>{{ notifications_url }}</url>
+        </com.tikal.hudson.plugins.notification.Endpoint>
+      </endpoints>
+    </com.tikal.hudson.plugins.notification.HudsonNotificationProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>BUILD_ID</name>
+          <description>The projectbuild id to associate with.</description>
+          <defaultValue></defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>touch myfile.txt</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>myfile.txt</artifacts>
+      <latestOnly>false</latestOnly>
+      <allowEmptyArchive>false</allowEmptyArchive>
+    </hudson.tasks.ArtifactArchiver>
+  </publishers>
+  <buildWrappers/>
+</project>
