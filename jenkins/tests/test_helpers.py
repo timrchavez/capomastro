@@ -1,4 +1,5 @@
 from django.test import TestCase
+from django.test.utils import override_settings
 
 import mock
 import jenkinsapi.job
@@ -13,6 +14,7 @@ class ImportBuildForJobTest(TestCase):
 
     # TODO: Improve testing of artifacts.
 
+    @override_settings(NOTIFICATION_HOST="http://example.com")
     def test_import_build_for_job(self):
         """
         Import build for job should update the build with the details fetched
@@ -28,7 +30,7 @@ class ImportBuildForJobTest(TestCase):
 
         mock_build.get_status.return_value = "SUCCESS"
         mock_build.get_result_url.return_value = "http://localhost/123"
-        mock_build.get_console_log.return_value = "This is the log"
+        mock_build.get_console.return_value = "This is the log"
         mock_build.get_artifacts.return_value = []
 
         with mock.patch("jenkins.helpers.logging") as mock_logging:
@@ -42,7 +44,7 @@ class ImportBuildForJobTest(TestCase):
         mock_logging.assert_has_calls(
             [mock.call.info("Located job %s\n" % job),
              mock.call.info("Using server at %s\n" % job.server.url),
-             mock.call.info("{'status': 'SUCCESS', 'duration': 1000, 'console_log': 'This is the log', 'url': 'http://localhost/123'}")])
+             mock.call.info("Processing build details for %s #5" % job)])
 
         build = Build.objects.get(pk=build.pk)
         self.assertEqual(1000, build.duration)
