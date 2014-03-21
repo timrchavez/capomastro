@@ -32,7 +32,7 @@ def build_job(job_pk, build_id=None, params=None):
 @shared_task
 def push_job_to_jenkins(job_pk):
     """
-    Create a job in the server with the config.
+    Create or update a job in the server with the config.
     """
     job = Job.objects.get(pk=job_pk)
     xml = get_job_xml_for_upload(job)
