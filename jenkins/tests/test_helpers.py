@@ -28,7 +28,7 @@ class ImportBuildForJobTest(TestCase):
 
         mock_build.get_status.return_value = "SUCCESS"
         mock_build.get_result_url.return_value = "http://localhost/123"
-        mock_build.get_console_log.return_value = "This is the log"
+        mock_build.get_console.return_value = "This is the log"
         mock_build.get_artifacts.return_value = []
 
         with mock.patch("jenkins.helpers.logging") as mock_logging:
