@@ -9,7 +9,6 @@ from capomastro.views import HomeView
 admin.autodiscover()
 
 urlpatterns = patterns('',
-    # noqa
     # Examples:
     # url(r'^$', 'capomastro.views.home', name='home'),
     # url(r'^blog/', include('blog.urls')),
