@@ -83,6 +83,8 @@ It requires a BUILD_ID string parameter.
 
 The `config.xml` file is templated using the Django templating language, `{{ notifications_url }}` will be replaced using the value from `NOTIFICATION_URL` in the `local_settings.py` file.
 
+It is important that this is templated, otherwise you will need to hardcode each job with the server that it can send notifications to.
+
 12\. Creating a dependency
 
 Dependencies control the building of Jobs, when you create a Dependency, you specify a Job type and a Server to build that job on.
@@ -98,7 +100,7 @@ The parameter entry box can be filled in e.g.:
     MYVALUE=testing
     MYOTHERVALUE=othervalue
 
-This will result in two parameters being passed to every build, with the key, value pairs.
+This will result in two parameters being passed to every build.
 
 Creating a dependency should result in a job being pushed to your chosen Jenkins server, in your Celery screen, you should see the log from this happening.
 
@@ -106,3 +108,10 @@ Creating a dependency should result in a job being pushed to your chosen Jenkins
 
 Capomastro manages builds of dependencies through a project, when you create a project, you specify the dependencies.
 
+Dependencies can be tracked automatically or not.
+
+If you have auto-track on, then anything that builds a dependency (automatically triggered by a VCS, manually built using Jenkins, or a project build using the same dependency) will result in the version of that dependency being used by the project being updated to use the newer version.
+
+14\. Building a project.
+
+You can create a "project build" this will be given a build-id, which is sent to Jenkins in the `BUILD_ID` variable, all builds of dependencies will be given the same `BUILD_ID`, this means it's possible to determine when a project's dependencies have all built, and get all artifacts from all dependencies.
