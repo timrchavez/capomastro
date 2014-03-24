@@ -19,3 +19,6 @@ DATABASES = {
         "PORT": "",
     },
 }
+
+# Note this should be a URL that Jenkins can access your Django application.
+NOTIFICATION_HOST = "http://localhost:8000"

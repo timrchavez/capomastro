@@ -28,6 +28,7 @@ def verify_server(name, stdout):
     except JenkinsServer.DoesNotExist:
         stdout.write("Could not find server %s" % name)
 
+
 class Command(BaseCommand):
     help = "Jenkins server management"
 
