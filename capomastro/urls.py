@@ -21,3 +21,6 @@ urlpatterns = patterns('',
 
 if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()
+
+if hasattr(settings, 'ADDITIONAL_URLS'):
+    urlpatterns += settings.ADDITIONAL_URLS
