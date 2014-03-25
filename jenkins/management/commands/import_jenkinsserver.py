@@ -23,6 +23,7 @@ class Command(BaseCommand):
         name, url, username, password, remote = args
 
         import_jenkinsserver(
+           name, url, username, password, remote,
            update=options["update"], stdout=self.stdout)
 
         transaction.commit_unless_managed()
