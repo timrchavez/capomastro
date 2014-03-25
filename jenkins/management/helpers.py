@@ -28,21 +28,21 @@ def verify_jenkinsserver(server):
     return messages
 
 
-def import_jobtype(jobfile, job_name, update=False, stdout=None):
+def import_jobtype(jobtype, jobfile, update=False, stdout=None):
     """
-    Import or update content to the specified job_name.
+    Import or update content to the specified jobtype.
     """
     content = jobfile.read()
     try:
-        job_type = JobType.objects.get(name=job_name)
+        existing = JobType.objects.get(name=jobtype)
         if update:
-            job_type.config_xml = content
-            job_type.save()
+            existing.config_xml = content
+            existing.save()
             if stdout:
-                stdout.write("Job type updated")
+                stdout.write("Job type updated\n")
         else:
             raise CommandError("Job type already exists")
     except JobType.DoesNotExist:
-        JobType.objects.create(name=job_name, config_xml=content)
+        JobType.objects.create(name=jobtype, config_xml=content)
         if stdout:
-            stdout.write("Job type created")
+            stdout.write("Job type created\n")

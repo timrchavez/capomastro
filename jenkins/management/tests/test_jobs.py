@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 from cStringIO import StringIO
 
 from django.core.management.base import CommandError
@@ -15,11 +17,11 @@ class ImportJobTest(TestCase):
         content.
         """
         stdout = StringIO()
-        import_jobtype(StringIO("my test"), "my test", stdout=stdout)
+        import_jobtype("my test", StringIO("my test"), stdout=stdout)
 
         job = JobType.objects.get(name="my test")
         self.assertEqual("my test", job.config_xml)
-        self.assertEqual("Job type created", stdout.getvalue())
+        self.assertEqual("Job type created\n", stdout.getvalue())
 
     def test_import_job_fails_with_preexisting_jobtype(self):
         """
@@ -28,7 +30,7 @@ class ImportJobTest(TestCase):
         """
         JobType.objects.create(name="my test", config_xml="testing")
         with self.assertRaises(CommandError) as cm:
-            import_jobtype(StringIO("new content"), "my test")
+            import_jobtype("my test", StringIO("new content"))
 
         self.assertEqual("Job type already exists", str(cm.exception))
         job = JobType.objects.get(name="my test")
@@ -42,8 +44,8 @@ class ImportJobTest(TestCase):
         stdout = StringIO()
         JobType.objects.create(name="my test", config_xml="testing")
         import_jobtype(
-            StringIO("new content"), "my test", update=True, stdout=stdout)
+            "my test", StringIO("new content"), update=True, stdout=stdout)
 
         job = JobType.objects.get(name="my test")
         self.assertEqual("new content", job.config_xml)
-        self.assertEqual("Job type updated", stdout.getvalue())
+        self.assertEqual("Job type updated\n", stdout.getvalue())
