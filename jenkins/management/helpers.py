@@ -1,7 +1,7 @@
 from django.core.management.base import CommandError
 from requests.exceptions import HTTPError
 
-from jenkins.models import JobType
+from jenkins.models import JobType, JenkinsServer
 
 
 REQUIRED_PLUGINS = ["notification"]
@@ -46,3 +46,28 @@ def import_jobtype(jobtype, jobfile, update=False, stdout=None):
         JobType.objects.create(name=jobtype, config_xml=content)
         if stdout:
             stdout.write("Job type created\n")
+
+
+def import_jenkinsserver(
+        name, url, username, password, remote, update=False, stdout=None):
+    """
+    Create a JenkinsServer or update the details.
+    """
+    try:
+        existing = JenkinsServer.objects.get(name=name)
+        if update:
+            existing.url = url
+            existing.username = username
+            existing.password = password
+            existing.remote_addr = remote
+            existing.save()
+            if stdout:
+                stdout.write("Server updated\n")
+        else:
+            raise CommandError("Server already exists")
+    except JenkinsServer.DoesNotExist:
+        JenkinsServer.objects.create(
+            name=name, url=url, username=username, password=password,
+            remote_addr=remote)
+        if stdout:
+           stdout.write("Server created\n")
