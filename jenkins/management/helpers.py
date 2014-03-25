@@ -1,7 +1,7 @@
 from django.core.management.base import CommandError
 from requests.exceptions import HTTPError
 
-from jenkins.models import JobType
+from jenkins.models import JobType, JenkinsServer
 
 
 REQUIRED_PLUGINS = ["notification"]
@@ -28,21 +28,46 @@ def verify_jenkinsserver(server):
     return messages
 
 
-def import_jobtype(jobfile, job_name, update=False, stdout=None):
+def import_jobtype(jobtype, jobfile, update=False, stdout=None):
     """
-    Import or update content to the specified job_name.
+    Import or update content to the specified jobtype.
     """
     content = jobfile.read()
     try:
-        job_type = JobType.objects.get(name=job_name)
+        existing = JobType.objects.get(name=jobtype)
         if update:
-            job_type.config_xml = content
-            job_type.save()
+            existing.config_xml = content
+            existing.save()
             if stdout:
-                stdout.write("Job type updated")
+                stdout.write("Jobtype updated\n")
         else:
-            raise CommandError("Job type already exists")
+            raise CommandError("Jobtype already exists")
     except JobType.DoesNotExist:
-        JobType.objects.create(name=job_name, config_xml=content)
+        JobType.objects.create(name=jobtype, config_xml=content)
         if stdout:
-            stdout.write("Job type created")
+            stdout.write("Jobtype created\n")
+
+
+def import_jenkinsserver(
+        name, url, username, password, remote, update=False, stdout=None):
+    """
+    Create a JenkinsServer or update the details.
+    """
+    try:
+        existing = JenkinsServer.objects.get(name=name)
+        if update:
+            existing.url = url
+            existing.username = username
+            existing.password = password
+            existing.remote_addr = remote
+            existing.save()
+            if stdout:
+                stdout.write("Server updated\n")
+        else:
+            raise CommandError("Server already exists")
+    except JenkinsServer.DoesNotExist:
+        JenkinsServer.objects.create(
+            name=name, url=url, username=username, password=password,
+            remote_addr=remote)
+        if stdout:
+           stdout.write("Server created\n")
