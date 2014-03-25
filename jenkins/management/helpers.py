@@ -39,13 +39,13 @@ def import_jobtype(jobtype, jobfile, update=False, stdout=None):
             existing.config_xml = content
             existing.save()
             if stdout:
-                stdout.write("Job type updated\n")
+                stdout.write("Jobtype updated\n")
         else:
-            raise CommandError("Job type already exists")
+            raise CommandError("Jobtype already exists")
     except JobType.DoesNotExist:
         JobType.objects.create(name=jobtype, config_xml=content)
         if stdout:
-            stdout.write("Job type created\n")
+            stdout.write("Jobtype created\n")
 
 
 def import_jenkinsserver(

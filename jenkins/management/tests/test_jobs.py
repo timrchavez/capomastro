@@ -21,7 +21,7 @@ class ImportJobTest(TestCase):
 
         job = JobType.objects.get(name="my test")
         self.assertEqual("my test", job.config_xml)
-        self.assertEqual("Job type created\n", stdout.getvalue())
+        self.assertEqual("Jobtype created\n", stdout.getvalue())
 
     def test_import_job_fails_with_preexisting_jobtype(self):
         """
@@ -32,7 +32,7 @@ class ImportJobTest(TestCase):
         with self.assertRaises(CommandError) as cm:
             import_jobtype("my test", StringIO("new content"))
 
-        self.assertEqual("Job type already exists", str(cm.exception))
+        self.assertEqual("Jobtype already exists", str(cm.exception))
         job = JobType.objects.get(name="my test")
         self.assertEqual("testing", job.config_xml)
 
@@ -48,4 +48,4 @@ class ImportJobTest(TestCase):
 
         job = JobType.objects.get(name="my test")
         self.assertEqual("new content", job.config_xml)
-        self.assertEqual("Job type updated\n", stdout.getvalue())
+        self.assertEqual("Jobtype updated\n", stdout.getvalue())
