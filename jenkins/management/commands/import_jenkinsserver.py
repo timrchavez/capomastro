@@ -7,6 +7,8 @@ from django.db import transaction
 from jenkins.management.helpers import import_jenkinsserver
 
 
+# TODO: implement optional field updating...
+
 class Command(BaseCommand):
     help = "Import or update a JenkinsServer"
     args = "[name] [url] [username] [password] [remote]"
