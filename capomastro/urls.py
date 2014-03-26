@@ -22,5 +22,7 @@ urlpatterns = patterns('',
 if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()
 
-if hasattr(settings, 'ADDITIONAL_URLS'):
-    urlpatterns += settings.ADDITIONAL_URLS
+if hasattr(settings, 'AUTHENTICATION_URLS'):
+    urlpatterns += settings.AUTHENTICATION_URLS
+else:
+    urlpatterns += url(r'^accounts/', include('django.contrib.auth.urls')),
