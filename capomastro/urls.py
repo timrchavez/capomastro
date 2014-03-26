@@ -24,3 +24,5 @@ if settings.DEBUG:
 
 if hasattr(settings, 'ADDITIONAL_URLS'):
     urlpatterns += settings.ADDITIONAL_URLS
+else:
+    urlpatterns += url(r'^accounts/', include('django.contrib.auth.urls')),
